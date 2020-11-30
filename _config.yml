@@ -6,15 +6,19 @@
 # https://learn-the-web.algonquindesign.ca/topics/markdown-yaml-cheat-sheet/#yaml
 # https://learnxinyminutes.com/docs/yaml/
 
-title: fastpages
-description: An easy to use blogging platform with support for Jupyter Notebooks.
-github_username: mcb00
+title: Random Realizations
+description: A blog about data science, statistics, machine learning, and the scientific method.
 # you can comment the below line out if your repo name is not different than your baseurl
 github_repo: "blog"
+github_username: "mcb00"
+
+# Permalinks
+permalink: /:year/:month/:day/:title
 
 # OPTIONAL: override baseurl and url if using a custom domain
 # Note: leave out the trailing / from this value. 
-url: "https://mcb00.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+# url: "https://mcb00.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://blog.mattbowers.dev"
 
 ###########################################################
 #########  Special Instructions for baseurl ###############
@@ -34,13 +38,14 @@ url: "https://mcb00.github.io" # the base hostname & protocol for your site, e.g
 #
 # 3. You must replace the parameter `baseurl` in _action_files/settings.ini with the same value as you set here but WITHOUT QUOTES.
 #
-baseurl: "/blog" # the subpath of your site, e.g. "/blog".
+# baseurl: "/blog" # the subpath of your site, e.g. "/blog".
+baseurl: ""
 
 # Github and twitter are optional:
 minima:
   social_links:
-    twitter: fastdotai
-    github: fastai
+    twitter: mcbwrs
+    github: mcb00
 
 # Set this to true to get LaTeX math equation support
 use_math: 
@@ -49,7 +54,7 @@ use_math:
 show_description: true
 
 # Set this to true to display image previews on home page, if they exist
-show_image: false
+show_image: true
 
 # Set this to true to turn on annotations with hypothes.is (https://web.hypothes.is/)
 annotations: false
@@ -58,7 +63,7 @@ annotations: false
 show_tags: true
 
 # Add your Google Analytics ID here if you have one and want to use it
-google_analytics: 
+google_analytics: "G-54R4QVZC0D"
 
 exclude:
   - docker-compose.yml
@@ -72,7 +77,7 @@ include:
 # This specifies what badges are turned on by default for notebook posts.
 default_badges:
   github: true
-  binder: true
+  binder: false
   colab: true
 
 # Escape HTML in post descriptions
