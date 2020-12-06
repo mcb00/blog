@@ -48,7 +48,7 @@ minima:
     github: mcb00
 
 # Set this to true to get LaTeX math equation support
-use_math: 
+use_math: true
 
 # Set this to true to display the summary of your blog post under your title on the Home page.
 show_description: true
@@ -63,7 +63,7 @@ annotations: false
 show_tags: true
 
 # Add your Google Analytics ID here if you have one and want to use it
-google_analytics: "G-54R4QVZC0D"
+google_analytics: "G-JKG69E687S"
 
 exclude:
   - docker-compose.yml
