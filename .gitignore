@@ -8,7 +8,10 @@ _site
 *.xml
 vendor
 _notebooks/.ipynb_checkpoints
+images/copied_from_nb
+.DS_Store
 # Local Netlify folder
 .netlify
 .tweet-cache
 __pycache__
+settings.ini
