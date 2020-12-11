@@ -4,6 +4,18 @@ title: About Me
 permalink: /about/
 ---
 
+<div class="row">
+  <div class="column">
+    <a href="https://twitter.com/mcbwrs"><img src="{{ site.baseurl }}/images/icons8-twitter-48.png" alt="Matt on Twitter"></a> 
+  </div>
+  <div class="column">
+    <a href="https://www.linkedin.com/in/matt-bowers/"><img src="{{ site.baseurl }}/images/icons8-linkedin-48.png" alt="Matt on Linkedin"></a> 
+  </div>
+  <div class="column">
+    <a href="http://www.github.com/mcb00"><img src="{{ site.baseurl }}/images/icons8-github-48.png" alt="Matt on GitHub"></a>
+  </div>
+</div>
+
 <img align="center" src="{{ site.baseurl }}/images/matt_circle.png" alt="Matt" width="250"/>
 
 Well howdy!
