@@ -40,7 +40,7 @@ Thus we have our second key hypothesis about the blogging experiment, that the w
 
 ## Contributing
 
-Working in the field of data science today is a bit like standing in front of a massive complementary all-you-can-learn buffet. 
+Working in the field of data science today is a bit like standing in front of a massive complimentary all-you-can-learn buffet. 
 There is an abundance of free material out on the interwebs for learning pretty much anything in data science from hello world python tutorials to research papers on  cutting-edge deep learning techniques.
 I've personally benefited from many a blog post that helped me unpack a new concept or get started using a new tool.
 And let's not forget the gigantic cyber warehouse full of freely available open source software tools that volunteer developers have straight-up donated to humanity. 
