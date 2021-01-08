@@ -16,7 +16,7 @@ permalink: /about/
   </div>
 </div>
 
-<img align="center" src="{{ site.baseurl }}/images/matt_circle.png" alt="Matt" width="250"/>
+<img align="center" src="{{ site.baseurl }}/images/matt_circle.jpg" alt="Matt" width="250"/>
 
 Well howdy!
 I'm Matt Bowers.
