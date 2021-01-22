@@ -412,7 +412,7 @@ $$F_2(x) = F_1(x) + h_2(x).$$
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>If we keep doing this, at each stage we'll train a new model $h_m(x)$ on the residuals from the previous composite model $F_{m-1}(x) - y$, and we'll get a new composite model</p>
+<p>If we keep doing this, at each stage we'll train a new model $h_m(x)$ on the previous composite model's residuals $y-F_{m-1}(x)$, and we'll get a new composite model</p>
 <p>
 $$F_m(x) = F_{m-1}(x) + h_m(x).$$
 </p>
