@@ -144,7 +144,7 @@ window.onload = wrap_img;
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Ahh, gradient descent. It's probably one of the most ubiquitous algorithms used in data science, but you're unlikely to see it being celebrated in the limelight of the Kagle podium.  Rather than taking center stage, gradient descent operates under the hood, powering the training for a wide range of models including deep neural networks, gradient boosting trees, generalized linear models, mixed effects models, and even the humble linear regressor. Getting an intuition for the algorithm will reveal how model fitting actually works and help us to see the common thread connecting a wide range of seemingly unrelated models.  In this post we'll get the intuition for gradient descent with a <em>fresh</em> analogy, develop  the mathematical formulation, and ground our understanding by using it to train ourselves a linear regression model.</p>
+<p>Ahh, gradient descent. It's probably one of the most ubiquitous algorithms used in data science, but you're unlikely to see it being celebrated in the limelight of the Kaggle podium.  Rather than taking center stage, gradient descent operates under the hood, powering the training for a wide range of models including deep neural networks, gradient boosting trees, generalized linear models, mixed effects models, and even some variants of the humble linear regressor. Getting an intuition for the algorithm will reveal how model fitting actually works and help us to see the common thread connecting a wide range of seemingly unrelated models.  In this post we'll get the intuition for gradient descent with a <em>fresh</em> analogy, develop  the mathematical formulation, and ground our understanding by using it to train ourselves a linear regression model.</p>
 
 </div>
 </div>
@@ -191,7 +191,7 @@ Luckily, we have a mathematical equivalent to our skin's ability to sense local 
 <h3 id="Determine-which-way-to-go">Determine which way to go<a class="anchor-link" href="#Determine-which-way-to-go"> </a></h3><p>Let $f(x,y)$ be the temperature on the dance floor at position $(x,y)$.
 The direction of fastest decrease in temperature is going to be given by some vector in our $(x,y)$ space, e.g.,</p>
 <p>[vector component in $x$ direction, vector component in $y$ direction]</p>
-<p>Turns out that the gradient of a function evaluated at a particular location  yields a vector that points in the direction of fastest <em>increase</em> in the function, pretty similar to what we'relooking for.
+<p>Turns out that the gradient of a function evaluated at a particular location  yields a vector that points in the direction of fastest <em>increase</em> in the function, pretty similar to what we're looking for.
 The gradient of $f(x,y)$ is given by</p>
 <p>
 $$ \nabla f(x,y) = \left [ \frac{\partial f(x,y)}{\partial x}, \frac{\partial f(x,y)}{\partial y} \right ] $$
@@ -258,8 +258,10 @@ for t in range(n_iterations):  # or some other convergence condition
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Training-a-Linear-Regression-Model-with-Gradient-Descent">Training a Linear Regression Model with Gradient Descent<a class="anchor-link" href="#Training-a-Linear-Regression-Model-with-Gradient-Descent"> </a></h2><p>To get the intuition for how we use gradient descent to train models, we'll use the hopefully familiar <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares">ordinary least squares</a> regression model, a.k.a. <em>linear regression</em>.
-In this problem, we have numerical feature $x$ and numerical target $y$, and we want to find a model of the form</p>
+<h2 id="Training-a-Linear-Regression-Model-with-Gradient-Descent">Training a Linear Regression Model with Gradient Descent<a class="anchor-link" href="#Training-a-Linear-Regression-Model-with-Gradient-Descent"> </a></h2><p>To get the intuition for how we use gradient descent to train models, let’s use it to train a linear regression model.
+Note that while <a href="https://en.wikipedia.org/wiki/Regularized_least_squares#Arbitrary_kernel">some variants</a> of linear regression <a href="https://scikit-learn.org/stable/modules/linear_model.html">do use gradient descent</a> for training, we would never use it to train a simple linear regression in real life since there is an exact
+<a href="https://en.wikipedia.org/wiki/Ordinary_least_squares">analytical solution</a> for the best-fit parameter values.</p>
+<p>Anyway, in the simple linear regression problem we have numerical feature $x$ and numerical target $y$, and we want to find a model of the form</p>
 <p>
 $$F(x) = \alpha + \beta x$$
 </p>
@@ -499,7 +501,7 @@ The blue points show the trajectory our gradient descent followed as it shimmied
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a></h2><p>There you have it, gradient descent explained with a fresh new analogy having nothing whatsoever to do with foggy mountains, plus an implemented example fitting an ordinary least squares model.
+<h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a></h2><p>There you have it, gradient descent explained with a fresh new analogy having nothing whatsoever to do with foggy mountains, plus an implemented example fitting a linear model.
 While we often see gradient descent used to train models by performing an optimization in parameter space, as in linear regression and neural networks, there are other ways to use this powerful technique to train models. 
 In particular, we'll soon see how our beloved gradient boosting tree models use gradient descent in <em>prediction space</em>, rather than parameter space.
 Stay tuned for that mind bender in a future post.</p>
