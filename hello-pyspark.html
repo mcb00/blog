@@ -152,22 +152,22 @@ window.onload = wrap_img;
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Well, you guessed it: it's time for us to learn pyspark!</p>
+<p>Well, you guessed it: it's time for us to learn PySpark!</p>
 <p>I know, I know, I can hear you screaming into your pillow. Indeed we just spent all that time converting from R and learning python and why the hell do we need yet another API for working with dataframes?</p>
 <p>That's a totally fair question.</p>
 <p>So what happens when we're working on something in the real world, where datasets get large in a hurry, and we suddenly have a dataframe that no longer fits into memory?
 We need a way for our computations and datasets to scale across multiple nodes in a distributed system without having to get too fussy about all the distributed compute details.</p>
 <p>Enter PySpark.</p>
-<p>I think it's fair to think of pyspark as a python package for working with arbitrarily large dataframes, i.e., it's like pandas but scalable.
+<p>I think it's fair to think of PySpark as a python package for working with arbitrarily large dataframes, i.e., it's like pandas but scalable.
 It's built on top of <a href="https://spark.apache.org/">Apache Spark</a>, a unified analytics engine for large-scale data processing. 
 <a href="https://spark.apache.org/docs/latest/api/python/">PySpark</a>  is essentially a way to access the functionality of spark via python code. 
-While there are other high-level interfaces to spark (such as Java, Scala, and R), for data scientists who are already working extensively with python, pyspark will be the natural interface of choice.
-PySpark also has great integration with <a href="https://spark.apache.org/docs/latest/sql-programming-guide.html">SQL</a>, and it has a companion machine learning library called <a href="https://spark.apache.org/mllib/">MLlib</a> that's more or less a scalable scikit-learn.</p>
+While there are other high-level interfaces to Spark (such as Java, Scala, and R), for data scientists who are already working extensively with python, PySpark will be the natural interface of choice.
+PySpark also has great integration with <a href="https://spark.apache.org/docs/latest/sql-programming-guide.html">SQL</a>, and it has a companion machine learning library called <a href="https://spark.apache.org/mllib/">MLlib</a> that's more or less a scalable scikit-learn (maybe we can cover it in a future post).</p>
 <p>So, here's the plan. 
-First we're going to get set up to run pyspark locally in a jupyter notebook on our laptop.
-This is my preferred environment for interactively playing with pyspark and learning the ropes.
-Then we're going to get up and running in pyspark as quickly as possible by reviewing the most essential functionality for working with dataframes and comparing it to how we would do things in pandas.
-Once we're comfortable running pyspark on the laptop, it's going to be much easier to jump onto a distributed cluster and run pyspark at scale.</p>
+First we're going to get set up to run PySpark locally in a jupyter notebook on our laptop.
+This is my preferred environment for interactively playing with PySpark and learning the ropes.
+Then we're going to get up and running in PySpark as quickly as possible by reviewing the most essential functionality for working with dataframes and comparing it to how we would do things in pandas.
+Once we're comfortable running PySpark on the laptop, it's going to be much easier to jump onto a distributed cluster and run PySpark at scale.</p>
 <p>Let's do this.</p>
 
 </div>
@@ -179,7 +179,7 @@ Once we're comfortable running pyspark on the laptop, it's going to be much easi
 <h2 id="How-to-Run-PySpark-in-a-Jupyter-Notebook-on-Your-Laptop">How to Run PySpark in a Jupyter Notebook on Your Laptop<a class="anchor-link" href="#How-to-Run-PySpark-in-a-Jupyter-Notebook-on-Your-Laptop"> </a>
 </h2>
 <p>Ok, I'm going to walk us through how to get things installed on a Mac or Linux machine where we're using homebrew and conda to manage virtual environments.
-If you have a different setup, your favorite search engine will help you get pyspark set up locally.</p>
+If you have a different setup, your favorite search engine will help you get PySpark set up locally.</p>
 
 </div>
 </div>
@@ -189,13 +189,13 @@ If you have a different setup, your favorite search engine will help you get pys
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Install-Spark">Install Spark<a class="anchor-link" href="#Install-Spark"> </a>
 </h3>
-<p>Install Scala.</p>
+<p>Most of the Spark sourcecode is written in Scala, so first we install Scala.</p>
 
 <pre><code>$ brew install scala</code></pre>
 <p>Install Spark.</p>
 
 <pre><code>$ brew install apache-spark</code></pre>
-<p>Check where spark is installed.</p>
+<p>Check where Spark is installed.</p>
 
 <pre><code>$ brew info apache-spark
 apache-spark: stable 3.1.1, HEAD
@@ -203,11 +203,11 @@ Engine for large-scale data processing
 https://spark.apache.org/
 /usr/local/Cellar/apache-spark/3.1.2 (1,361 files, 242.6MB) *
 ...</code></pre>
-<p>Set the spark home environment variable to the path returned by <code>brew info</code> with <code>/libexec</code> appended to the end.
+<p>Set the Spark home environment variable to the path returned by <code>brew info</code> with <code>/libexec</code> appended to the end.
 Don't forget to add the export to your <code>.zshrc</code> file too.</p>
 
 <pre><code>$ export SPARK_HOME=/usr/local/Cellar/apache-spark/3.1.2/libexec</code></pre>
-<p>Test the installation by starting the spark shell.</p>
+<p>Test the installation by starting the Spark shell.</p>
 
 <pre><code>$ spark-shell
 ...
@@ -223,7 +223,7 @@ Type in expressions to have them evaluated.
 Type :help for more information.
 
 scala&gt;</code></pre>
-<p>If you get the <code>scala&gt;</code> prompt, then you've successfully installed spark on your laptop!</p>
+<p>If you get the <code>scala&gt;</code> prompt, then you've successfully installed Spark on your laptop!</p>
 
 </div>
 </div>
@@ -233,11 +233,11 @@ scala&gt;</code></pre>
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Install-PySpark">Install PySpark<a class="anchor-link" href="#Install-PySpark"> </a>
 </h3>
-<p>Use conda to install the pyspark python package.
+<p>Use conda to install the PySpark python package.
 As usual, it's advisable to do this in a new virtual environment.</p>
 
 <pre><code>$ conda install pyspark</code></pre>
-<p>You should be able to launch an interactive pyspark REPL by saying pyspark.</p>
+<p>You should be able to launch an interactive PySpark REPL by saying pyspark.</p>
 
 <pre><code>$ pyspark
 ...
@@ -254,8 +254,8 @@ Spark context available as 'sc' (master = local[*], app id = local-1624127229929
 SparkSession available as 'spark'.
 &gt;&gt;&gt;</code></pre>
 <p>This time we get a familiar python <code>&gt;&gt;&gt;</code> prompt.
-This is an interactive shell where we can easily experiment with pyspark.
-Feel free to run the example code in this post here in the pyspark shell, or, if you prefer a notebook, read on and we'll get set up to run pyspark in a jupyter notebook.</p>
+This is an interactive shell where we can easily experiment with PySpark.
+Feel free to run the example code in this post here in the PySpark shell, or, if you prefer a notebook, read on and we'll get set up to run PySpark in a jupyter notebook.</p>
 
 </div>
 </div>
@@ -265,11 +265,11 @@ Feel free to run the example code in this post here in the pyspark shell, or, if
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="The-Spark-Session-Object">The Spark Session Object<a class="anchor-link" href="#The-Spark-Session-Object"> </a>
 </h3>
-<p>You may have noticed that when we launched that pyspark interactive shell, it told us that something called <code>SparkSession</code> was available as <code>'spark'</code>.
+<p>You may have noticed that when we launched that PySpark interactive shell, it told us that something called <code>SparkSession</code> was available as <code>'spark'</code>.
 So basically, what's happening here is that when we launch the pyspark shell, it instantiates an object called <code>spark</code> which is an instance of class <code>pyspark.sql.session.SparkSession</code>.
-The spark session object is going to be our entry point for all kinds of pyspark functionality, i.e., we're going to be saying things like <code>spark.this()</code> and <code>spark.that()</code> to make stuff happen.</p>
-<p>The pyspark interactive shell is kind enough to instantiate one of these spark session objects for us automatically.
-However, when we're using another interface to pyspark (like say a jupyter notebook running a python kernal), we'll have to make a spark session object for ourselves.</p>
+The spark session object is going to be our entry point for all kinds of PySpark functionality, i.e., we're going to be saying things like <code>spark.this()</code> and <code>spark.that()</code> to make stuff happen.</p>
+<p>The PySpark interactive shell is kind enough to instantiate one of these spark session objects for us automatically.
+However, when we're using another interface to PySpark (like say a jupyter notebook running a python kernal), we'll have to make a spark session object for ourselves.</p>
 
 </div>
 </div>
@@ -279,8 +279,8 @@ However, when we're using another interface to pyspark (like say a jupyter noteb
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Create-a-PySpark-Session-in-a-Jupyter-Notebook">Create a PySpark Session in a Jupyter Notebook<a class="anchor-link" href="#Create-a-PySpark-Session-in-a-Jupyter-Notebook"> </a>
 </h3>
-<p>There are a few ways to run pyspark in jupyter which you can read about <a href="https://www.datacamp.com/community/tutorials/apache-spark-python">here</a>.</p>
-<p>For derping around with pyspark on your laptop, I think the best way is to instantiate a spark session from a  jupyter notebook running on a regular python kernal. 
+<p>There are a few ways to run PySpark in jupyter which you can read about <a href="https://www.datacamp.com/community/tutorials/apache-spark-python">here</a>.</p>
+<p>For derping around with PySpark on your laptop, I think the best way is to instantiate a spark session from a  jupyter notebook running on a regular python kernel. 
 The method we'll use involves running a standard jupyter notebook session with a python kernal and using the findspark package to initialize the spark session.
 So, first install the findspark package.</p>
 
@@ -290,7 +290,7 @@ So, first install the findspark package.</p>
 <pre><code>$ jupyter notebook</code></pre>
 <p>Go ahead and fire up a new notebook using a regular python 3 kernal.
 Once you land inside the notebook, there are a couple things we need to do to get a spark session instantiated.
-You can thing of this as boilerplate code that we need to run in the first cell of a notebook where we're going to use pyspark.</p>
+You can think of this as boilerplate code that we need to run in the first cell of a notebook where we're going to use PySpark.</p>
 
 </div>
 </div>
@@ -320,10 +320,10 @@ You can thing of this as boilerplate code that we need to run in the first cell 
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>First we're running findspark's <code>init()</code> method to find our spark installation. If you run into errors here, 
+<p>First we're running findspark's <code>init()</code> method to find our Spark installation. If you run into errors here, 
 make sure you got the <code>SPARK_HOME</code> environment variable correctly set in the install instructions above.
 Then we instantiate a spark session as <code>spark</code>.
-Once you run this, you're ready to rock and roll with pyspark in your jupyter notebook.</p>
+Once you run this, you're ready to rock and roll with PySpark in your jupyter notebook.</p>
 
 </div>
 </div>
@@ -347,11 +347,11 @@ Once you run this, you're ready to rock and roll with pyspark in your jupyter no
 </h2>
 <p>PySpark provides two main abstractions for data: the RDD and the dataframe.
 <strong>RDD</strong>'s are just a distributed list of objects; we won't go into details about them in this post.
-For us, the key object in pyspark is the <strong>dataframe</strong>.</p>
+For us, the key object in PySpark is the <strong>dataframe</strong>.</p>
 <p>While PySpark dataframes expose much of the functionality you would expect from a library for tabular data manipulation, they behave a little differently from pandas dataframes, both syntactically and under-the-hood.
 There are a couple of key concepts that will help explain these idiosyncracies.</p>
-<p><strong>Immutability</strong> - Pyspark RDD's and dataframes are immutable. This means that if you change an object, e.g. by adding a column to a dataframe, pyspark returns a reference to a new dataframe; it does not modify the existing dataframe. This is kind of nice, because we don't have to worry about that whole <a href="https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy">view versus copy</a> nonsense that happens in pandas.</p>
-<p><strong>Lazy Evaluation</strong> - Lazy evaluation means that when we start manipulating a dataframe, pyspark won't actually perform any of the computations until we explicitly ask for the result. This is nice because it potentially allows pyspark to do fancy optimizations before executing a sequence of operations. It's also confusing at first, because pyspark will seem to blaze through complex operations and then take forever to print a few rows of the dataframe.</p>
+<p><strong>Immutability</strong> - Pyspark RDD's and dataframes are immutable. This means that if you change an object, e.g. by adding a column to a dataframe, PySpark returns a reference to a new dataframe; it does not modify the existing dataframe. This is kind of nice, because we don't have to worry about that whole <a href="https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy">view versus copy</a> nonsense that happens in pandas.</p>
+<p><strong>Lazy Evaluation</strong> - Lazy evaluation means that when we start manipulating a dataframe, PySpark won't actually perform any of the computations until we explicitly ask for the result. This is nice because it potentially allows PySpark to do fancy optimizations before executing a sequence of operations. It's also confusing at first, because PySpark will seem to blaze through complex operations and then take forever to print a few rows of the dataframe.</p>
 
 </div>
 </div>
@@ -370,7 +370,7 @@ There are a couple of key concepts that will help explain these idiosyncracies.<
 <h3 id="Creating-a-PySpark-dataframe-with-createDataFrame()">Creating a PySpark dataframe with <code>createDataFrame()</code><a class="anchor-link" href="#Creating-a-PySpark-dataframe-with-createDataFrame()"> </a>
 </h3>
 <p>The first thing we'll need is a way to make dataframes.
-<code>createDataFrame()</code> allows us to create pyspark dataframes from python objects like nested lists or pandas dataframes.
+<code>createDataFrame()</code> allows us to create PySpark dataframes from python objects like nested lists or pandas dataframes.
 Notice that <code>createDataFrame()</code> is a method of the spark session class, so we'll call it from our spark session <code>spark</code>by saying <code>spark.createDataFrame()</code>.</p>
 
 </div>
@@ -404,7 +404,7 @@ Notice that <code>createDataFrame()</code> is a method of the spark session clas
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's read the seaborn tips dataset into a pandas dataframe and then use it to create a pyspark dataframe.</p>
+<p>Let's read the seaborn tips dataset into a pandas dataframe and then use it to create a PySpark dataframe.</p>
 
 </div>
 </div>
@@ -438,7 +438,7 @@ Notice that <code>createDataFrame()</code> is a method of the spark session clas
 <p></p>
 <div class="flash">
     <svg class="octicon octicon-info octicon octicon-info" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
-    <strong>Note: </strong>In real life when we’re running pyspark on a large-scale distributed system, we would not generally want to use python lists or pandas dataframes to load data into pyspark.  Ideally we would want to read data directly from where it is stored on HDFS, e.g. by reading <a href="https://spark.apache.org/docs/latest/sql-data-sources-parquet.html">parquet files</a>, or by querying directly from a hive database using <a href="https://spark.apache.org/docs/latest/sql-programming-guide.html">spark sql</a>.
+    <strong>Note: </strong>In real life when we’re running PySpark on a large-scale distributed system, we would not generally want to use python lists or pandas dataframes to load data into PySpark.  Ideally we would want to read data directly from where it is stored on HDFS, e.g. by reading <a href="https://spark.apache.org/docs/latest/sql-data-sources-parquet.html">parquet files</a>, or by querying directly from a hive database using <a href="https://spark.apache.org/docs/latest/sql-programming-guide.html">spark sql</a>.
 </div>
 
 </div>
@@ -449,7 +449,7 @@ Notice that <code>createDataFrame()</code> is a method of the spark session clas
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Peeking-at-a-dataframe's-contents">Peeking at a dataframe's contents<a class="anchor-link" href="#Peeking-at-a-dataframe's-contents"> </a>
 </h3>
-<p>The default print method for the pyspark dataframe will just give you the schema.</p>
+<p>The default print method for the PySpark dataframe will just give you the schema.</p>
 
 </div>
 </div>
@@ -491,7 +491,7 @@ Notice that <code>createDataFrame()</code> is a method of the spark session clas
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>If we want to peek at some of the data, we'll need to use the <code>show()</code> method, which is analogous to the pandas <code>head()</code>.
-Remember that <code>show()</code> will cause pyspark to execute any operations that it's been lazily waiting to evaluate, so sometimes it can take a while to run.</p>
+Remember that <code>show()</code> will cause PySpark to execute any operations that it's been lazily waiting to evaluate, so sometimes it can take a while to run.</p>
 
 </div>
 </div>
@@ -633,7 +633,7 @@ You can pass either a list of names, or pass names as arguments.</p>
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Filter-rows-based-on-column-values">Filter rows based on column values<a class="anchor-link" href="#Filter-rows-based-on-column-values"> </a>
 </h3>
-<p>Analogous to the <code>WHERE</code> clause in SQL, and the <code>query()</code> method in pandas, pyspark provides a <code>filter()</code> method which returns only the rows that meet the specified conditions.
+<p>Analogous to the <code>WHERE</code> clause in SQL, and the <code>query()</code> method in pandas, PySpark provides a <code>filter()</code> method which returns only the rows that meet the specified conditions.
 Its argument is a string specifying the condition to be met for rows to be included in the result. You specify the condition as an expression involving the column names and comparison operators like &lt;, &gt;, &lt;=, &gt;=, == (equal), and ~= (not equal). You can specify compound expressions using <code>and</code> and <code>or</code>, and you can even do a SQL-like <code>in</code> to check if the column value matches any items in a list.</p>
 
 </div>
@@ -672,7 +672,7 @@ Its argument is a string specifying the condition to be met for rows to be inclu
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>If you're into boolean indexing with the brackets, pyspark does support that too, but I encourage you to use <code>filter()</code> instead. 
+<p>If you're into boolean indexing with the brackets, PySpark does support that too, but I encourage you to use <code>filter()</code> instead. 
 Check out my rant about <a href="https://blog.mattbowers.dev/8020-pandas-tutorial#Select--rows-based-on-their-values-with-query(">why you shouldn't use boolean indexing</a>) for the details.
 The TLDR is that <code>filter()</code> requires less typing, makes your code more readable and portable, and it allows you to chain method calls together using dot chains.</p>
 <p>Here's the boolean indexing equivalent of the last example from above.</p>
@@ -739,7 +739,7 @@ The TLDR is that <code>filter()</code> requires less typing, makes your code mor
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Notice that we've imported the <code>pyspark.sql.functions</code>) module. This module contains lots of useful functions that we'll be using all over the place, so it's probably a good idea to go ahead and import it whenever you're using pyspark.
+<p>Notice that we've imported the <code>pyspark.sql.functions</code>) module. This module contains lots of useful functions that we'll be using all over the place, so it's probably a good idea to go ahead and import it whenever you're using PySpark.
 BTW, it seems like folks usually import this module as <code>f</code> or <code>F</code>.
 In this example we're using the <code>col()</code> function, which allows us to refer to columns in our dataframe using string representations of the column names.</p>
 <p>You could also achieve the same result using the dot to reference the other columns, but this requires us to type the dataframe name over and over again, which makes it harder to reuse this code on different dataframes or in <a href="https://blog.mattbowers.dev/8020-pandas-tutorial#Chain-transformations-together-with-the-dot-chain">dot chains</a>.</p>
@@ -754,7 +754,7 @@ In this example we're using the <code>col()</code> function, which allows us to 
 
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># add a new column using the dot to reference other columns (less reccommended)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># add a new column using the dot to reference other columns (less recommended)</span>
 <span class="n">pyspark_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">'tip_percent'</span><span class="p">,</span> <span class="n">pyspark_df</span><span class="o">.</span><span class="n">tip</span> <span class="o">/</span> <span class="n">pyspark_df</span><span class="o">.</span><span class="n">total_bill</span><span class="p">)</span>
 </pre></div>
 
@@ -811,6 +811,13 @@ In this example we're using the <code>col()</code> function, which allows us to 
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># conditional assignment (like CASE WHEN)</span>
 <span class="n">pyspark_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">'is_male'</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s1">'sex'</span><span class="p">)</span> <span class="o">==</span> <span class="s1">'Male'</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="kc">False</span><span class="p">))</span>
+
+<span class="c1"># using multiple when conditions and values</span>
+<span class="n">pyspark_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s1">'bill_size'</span><span class="p">,</span> 
+    <span class="n">f</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s1">'total_bill'</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">,</span> <span class="s1">'small'</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s1">'total_bill'</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">20</span><span class="p">,</span> <span class="s1">'medium'</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="s1">'large'</span><span class="p">)</span>
+<span class="p">)</span>
 </pre></div>
 
     </div>
@@ -823,7 +830,7 @@ In this example we're using the <code>col()</code> function, which allows us to 
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Remember that since pyspark dataframes are immutable, calling <code>withColumns()</code> on a dataframe returns a new dataframe.
+<p>Remember that since PySpark dataframes are immutable, calling <code>withColumns()</code> on a dataframe returns a new dataframe.
 If you want to persist the result, you'll need to make an assignment.</p>
 
 <pre><code>pyspark_df = pyspark_df.withColumns(...)</code></pre>
@@ -921,7 +928,7 @@ Just like in pandas, we can call methods like <code>count()</code> and <code>mea
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>If you want to get fancier with your aggregations, it might just be easier to express them using hive syntax. read on to find out how.</p>
+<p>If you want to get fancier with your aggregations, it might just be easier to express them using hive syntax. Read on to find out how.</p>
 
 </div>
 </div>
@@ -931,12 +938,12 @@ Just like in pandas, we can call methods like <code>count()</code> and <code>mea
 <div class="text_cell_render border-box-sizing rendered_html">
 <h3 id="Run-Hive-SQL-on-dataframes">Run Hive SQL on dataframes<a class="anchor-link" href="#Run-Hive-SQL-on-dataframes"> </a>
 </h3>
-<p>One of the mind-blowing features of pyspark is that it 
+<p>One of the mind-blowing features of PySpark is that it 
 allows you to write hive SQL queries on your dataframes.
-To take a pyspark dataframe into the SQL world, use the <code>createOrReplaceTempView()</code> method.
+To take a PySpark dataframe into the SQL world, use the <code>createOrReplaceTempView()</code> method.
 This method takes one string argument which will be the dataframes name in the SQL world.
 Then you can use <code>spark.sql()</code> to run a query. 
-The result is returned as a pyspark dataframe.</p>
+The result is returned as a PySpark dataframe.</p>
 
 </div>
 </div>
@@ -957,30 +964,6 @@ The result is returned as a pyspark dataframe.</p>
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>+----------+----+------+------+---+------+----+
-|total_bill| tip|   sex|smoker|day|  time|size|
-+----------+----+------+------+---+------+----+
-|     16.99|1.01|Female|    No|Sun|Dinner|   2|
-|     10.34|1.66|  Male|    No|Sun|Dinner|   3|
-|     21.01| 3.5|  Male|    No|Sun|Dinner|   3|
-|     23.68|3.31|  Male|    No|Sun|Dinner|   2|
-|     24.59|3.61|Female|    No|Sun|Dinner|   4|
-+----------+----+------+------+---+------+----+
-only showing top 5 rows
-
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
     
 
@@ -988,10 +971,10 @@ only showing top 5 rows
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <p>This is awesome for a couple of reasons. First, it allows us to easily express any transformations in hive syntax.
-If you're like me and you've already been using hive, this will dramaticallyy reduce the pyspark learning curve, becausewhen in doubt, you can always bump a dataframe into the SQL world and simply use hive to do what you need.
-Second, if you have a hive deployment, pyspark's SQL world also has access to all of your hive tables.
-This means you can write queries involving both hive tables and your pyspark dataframes.
-It also means you can run hive commands like inserting into a tabledirectly from pyspark.</p>
+If you're like me and you've already been using hive, this will dramatically reduce the PySpark learning curve, because when in doubt, you can always bump a dataframe into the SQL world and simply use hive to do what you need.
+Second, if you have a hive deployment, PySpark's SQL world also has access to all of your hive tables.
+This means you can write queries involving both hive tables and your PySpark dataframes.
+It also means you can run hive commands, like inserting into a table, directly from PySpark.</p>
 
 </div>
 </div>
@@ -999,7 +982,7 @@ It also means you can run hive commands like inserting into a tabledirectly from
 <div class="cell border-box-sizing text_cell rendered">
 <div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's do some aggregations that might be a little trickier to do using the pyspark built-in functions.</p>
+<p>Let's do some aggregations that might be a little trickier to do using the PySpark built-in functions.</p>
 
 </div>
 </div>
@@ -1031,26 +1014,6 @@ It also means you can run hive commands like inserting into a tabledirectly from
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>+------+---+------------------+-------+-------------------+
-|  time|  n|           avg_tip|med_tip|       pct_tip_gt_3|
-+------+---+------------------+-------+-------------------+
-| Lunch| 68|2.7280882352941176|    2.2|0.27941176470588236|
-|Dinner|176| 3.102670454545455|    3.0|0.44886363636363635|
-+------+---+------------------+-------+-------------------+
-
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
     
 
@@ -1059,11 +1022,11 @@ It also means you can run hive commands like inserting into a tabledirectly from
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Visualization-with-PySpark">Visualization with PySpark<a class="anchor-link" href="#Visualization-with-PySpark"> </a>
 </h2>
-<p>There aren't any tools for visualization included in pyspark.
-But that's no problem, because we can just use the <code>toPandas()</code> method on a pyspark dataframe to pull data back into pandas.
+<p>There aren't any tools for visualization included in PySpark.
+But that's no problem, because we can just use the <code>toPandas()</code> method on a PySpark dataframe to pull data back into pandas.
 Once we have a pandas dataframe, we can happily build visualizations as usual.
-Of course, if your pyspark dataframe is huge, you wouldn't want to use <code>toPandas()</code> directly, because pyspark will attempt to read the entire contents of its huge dataframe into memory.
-Instead, it's best to use pyspark to generate aggregations of your data for plotting or to pull only a sample of your full data into pandas.</p>
+Of course, if your PySpark dataframe is huge, you wouldn't want to use <code>toPandas()</code> directly, because PySpark will attempt to read the entire contents of its huge dataframe into memory.
+Instead, it's best to use PySpark to generate aggregations of your data for plotting or to pull only a sample of your full data into pandas.</p>
 
 </div>
 </div>
@@ -1084,22 +1047,6 @@ Instead, it's best to use pyspark to generate aggregations of your data for plot
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-
-
-<div class="output_png output_subarea ">
-<img src="data:image/png;base64,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%0A">
-</div>
-
-</div>
-
-</div>
-</div>
-
 </div>
     
 
@@ -1108,9 +1055,10 @@ Instead, it's best to use pyspark to generate aggregations of your data for plot
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a>
 </h2>
-<p>So that's a wrap on our crash course in working with pyspark.
- You now have a good idea of what pyspark is and how to get started manipulating dataframes with it. 
-May no dataframe be too large for you ever again.</p>
+<p>So that's a wrap on our crash course in working with PySpark.
+You now have a good idea of what pyspark is and how to get started manipulating dataframes with it. 
+Stay tuned for a future post on PySpark's companion ML library MLlib.
+In the meantime, may no dataframe be too large for you ever again.</p>
 
 </div>
 </div>
