@@ -8,8 +8,8 @@
 <meta name="generator" content="Jekyll v4.1.1" />
 <meta property="og:title" content="How to Implement a Gradient Boosting Machine that Works with Any Loss Function" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Implement Freedman’s original gradient boosting algorithm and train models with any loss function." />
-<meta property="og:description" content="Implement Freedman’s original gradient boosting algorithm and train models with any loss function." />
+<meta name="description" content="Summarize Freedman’s seminal GBM paper and implement the generic gradient boosting algorithm to train models with any differentiable loss function." />
+<meta property="og:description" content="Summarize Freedman’s seminal GBM paper and implement the generic gradient boosting algorithm to train models with any differentiable loss function." />
 <link rel="canonical" href="https://blog.mattbowers.dev/gradient-boosting-machine-with-any-loss-function" />
 <meta property="og:url" content="https://blog.mattbowers.dev/gradient-boosting-machine-with-any-loss-function" />
 <meta property="og:site_name" content="Random Realizations" />
@@ -17,7 +17,7 @@
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2021-10-23T00:00:00-05:00" />
 <script type="application/ld+json">
-{"dateModified":"2021-10-23T00:00:00-05:00","datePublished":"2021-10-23T00:00:00-05:00","url":"https://blog.mattbowers.dev/gradient-boosting-machine-with-any-loss-function","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.mattbowers.dev/gradient-boosting-machine-with-any-loss-function"},"headline":"How to Implement a Gradient Boosting Machine that Works with Any Loss Function","image":"https://blog.mattbowers.dev/images/freedman_waterfall.jpg","description":"Implement Freedman’s original gradient boosting algorithm and train models with any loss function.","@context":"https://schema.org"}</script>
+{"dateModified":"2021-10-23T00:00:00-05:00","datePublished":"2021-10-23T00:00:00-05:00","url":"https://blog.mattbowers.dev/gradient-boosting-machine-with-any-loss-function","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.mattbowers.dev/gradient-boosting-machine-with-any-loss-function"},"headline":"How to Implement a Gradient Boosting Machine that Works with Any Loss Function","image":"https://blog.mattbowers.dev/images/freedman_waterfall.jpg","description":"Summarize Freedman’s seminal GBM paper and implement the generic gradient boosting algorithm to train models with any differentiable loss function.","@context":"https://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
 <link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://blog.mattbowers.dev/feed.xml" title="Random Realizations" /><!-- the google_analytics_id gets auto inserted from the config file -->
 
@@ -94,13 +94,13 @@ window.onload = wrap_img;
         <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
-    <h1 class="post-title p-name" itemprop="name headline">How to Implement a Gradient Boosting Machine that Works with Any Loss Function</h1><p class="page-description">Implement Freedman's original gradient boosting algorithm and train models with any loss function.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-10-23T00:00:00-05:00" itemprop="datePublished">
+    <h1 class="post-title p-name" itemprop="name headline">How to Implement a Gradient Boosting Machine that Works with Any Loss Function</h1><p class="page-description">Summarize Freedman's seminal GBM paper and implement the generic gradient boosting algorithm to train models with any differentiable loss function.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-10-23T00:00:00-05:00" itemprop="datePublished">
         Oct 23, 2021
       </time>
        • <span class="read-time" title="Estimated read time">
     
     
-      8 min read
+      11 min read
     
 </span></p>
 
@@ -151,18 +151,42 @@ window.onload = wrap_img;
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Well I've been alluding to this capability for several posts now, so it's time we get down to business and look at how Freedman's original GBM treated custom loss functions. This will help us complete our understanding of the original GBM algorithm, and it will help us begin to appreciate why, in practical situations, we will almost always be better off using variants like XGBoost or LightGBM, especially when we want to use custom losses. We'll see more on these state-of-the-art boosting algos in future posts.</p>
+<p>Friends, this is going to be an epic post! Today, we bring together all the ideas we've built up over the past few posts to nail down our understanding of the key ideas in Jerome Freedman's seminal 2001 paper: "<a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">Greedy Function Approximation: A Gradient Boosting Machine</a>."
+In particular, we'll summarize the highlights from the paper, and we'll build an in-house python implementation of his generic gradient boosting algorithm which can train with any differentiable loss function.
+What's more, we'll go ahead and take our generic gradient boosting machine for a spin by training it with several of the most popular loss functions used in practice.</p>
+<p>Are you freaking stoked or what?</p>
+<p>Sweet. Let's do this.</p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Freedman's-GBM-Algorithm">Freedman's GBM Algorithm<a class="anchor-link" href="#Freedman's-GBM-Algorithm"> </a></h2><p>In a previous post I outlined a general algorithm for gradient boosting with an arbitrary loss function, but it was presented to serve our intuition and was therefore a little bit hand-wavy. 
-This time let's get specific enough to implement it in code. 
-We'll use Freedman's original gradient boost algorithm from page 5 of <a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">the paper</a> (translated into the notation we've been using so far).</p>
+<h2 id="Summary-of-the-Paper">Summary of the Paper<a class="anchor-link" href="#Summary-of-the-Paper"> </a></h2><p>FIrst of all, I encourage you to pick up <a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">the paper</a> and read it yourself. Like many papers, there is a lot of scary looking math in the first few pages, but if you've been following along on  this blog, you'll find that it's actually totally approachable. 
+This is the kind of thing that cures imposter syndrome, so give it a shot.
+Following are the highlights as I see them.</p>
+<p>The first section is just an introduction about function approximation, of which supervised learning is a special case. Section 2 casually introduces the idea of doing gradient descent in function space, an idea we spent <a href="https://blog.mattbowers.dev/how-gradient-boosting-does-gradient-descent">an entire post</a> demystifying earlier.
+Section 3 introduces the idea of performing gradient descent in function space by using additive models constructed via  greedy  stagewise iteration (a.k.a. boosting).
+We also arrive at algorithm 1, gradient boost, the generic gradient boosting machine that works with any differentiable loss function.</p>
+<p>In Section 4, Freedman goes on to detail several special cases of the gradient boost algorithm, corresponding to the use of different loss functions including least squares, least absolute deviations, Huber loss, and negative binomial log likelihood. He also presents a variation for multi-class classification, and he proposes a way to optimize the gradient boost algorithm when the weak learners are decision trees (more on that enhancement in the next section).</p>
+<p>In section 5 he proposes the "learning rate" parameter which is used for regularization; we already discussed this in the <a href="https://blog.mattbowers.dev/gradient-boosting-machine-from-scratch">first GBM post</a>. Section 6 provides simulation-based performance metrics for his gradient boost variants with benchmarks against other contemporary models.</p>
+<p>Section 7 discusses the optimal size of the base learner decision trees to use for boosting. The key insight is that the size of the trees dictates the highest order interaction among features that can be captured, i.e., trees with shallow depth can only represent low-order interactions.
+Freedman's suggestion is to choose the tree depth by using hyperparameter search with a validation dataset.</p>
+<p>Section 8 explores model interpretability via feature importance and partial dependence plots. I think it's slightly ironic that interpretability is addressed in the original gradient boosting paper, and yet, 20 years later I still hear people say that these models are uninterpretable black boxes.
+Section 9 applies gradient boosting models to two real datasets: classification on geological data and regression on demographic  survey data.</p>
+<p>Freedman concludes in Section 10  by musing about the advantages of gradient boosting with trees.
+He notes some key advantages afforded by the use of decision trees including no need to rescale input data, robustness against irrelevant input features, and elegant handling of missing feature values.
+He notes that gradient boosting manages to capitalize on the benefits of decision trees while minimizing their key weakness (crappy accuracy)
+These claims have been corroborated over the last 20 years  by the widespread adoption and success of gradient boosting trees and their modern descendants  in practical machine learning applications.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Freedman's-Generic-Gradient-Boosting-Algorithm">Freedman's Generic Gradient Boosting Algorithm<a class="anchor-link" href="#Freedman's-Generic-Gradient-Boosting-Algorithm"> </a></h2><p>Let's take a closer look at  Freedman's original gradient boost algorithm from Section 3 of <a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">the paper</a> (translated into the notation we've been using so far).</p>
 <p>Like last time, we have training data $(\mathbf{y}, \mathbf{X})$ where $\mathbf{y}$ is a length-$n$ vector of target values, and $\mathbf{X}$ is an $n \times p$ matrix with $n$ observations of $p$ features. We also have a differentiable loss function $L(\mathbf{y}, \mathbf{\hat{y}}) = \sum_{i=1}^n l(y_i, \hat{y}_i)$, a "learning rate" hyperparameter $\eta$, and a fixed number of model iterations $M$.</p>
-<p><strong>Algorithm</strong> <em>gradient_boost</em>$(\mathbf{X},\mathbf{y},L,\eta, M)$ returns: model $F_M$</p>
+<p><strong>Algorithm:</strong> <em>gradient_boost</em>$(\mathbf{X},\mathbf{y},L,\eta, M)$ returns: model $F_M$</p>
 <ol>
 <li><p>Let base model
 $F_0(\mathbf{x}) = c$, where $c = \text{argmin}_{c} \sum_{i=1}^n l(y_i, c)$</p>
@@ -209,7 +233,7 @@ Instead of using the mean target value as the prediction for each node (as we wo
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Implementation">Implementation<a class="anchor-link" href="#Implementation"> </a></h2><p>I did some half-assed searching on the interweb for an implementation of GBM that allows the user to provide a custom loss function, and you know what? I couldn't find anything. If you find another implementation, post in the comments so we can learn from it too.</p>
+<h2 id="Implementation">Implementation<a class="anchor-link" href="#Implementation"> </a></h2><p>I did some (half-assed) searching on the interweb for an implementation of GBM that allows the user to provide a custom loss function, and you know what? I couldn't find anything. If you find another implementation, post in the comments so we can learn from it too.</p>
 <p>Since we need to rip open the decision trees and modify the values predicted by their terminal nodes, we'll want to brush up on the scikit-learn <a href="https://scikit-learn.org/stable/auto_examples/tree/plot_unveil_tree_structure.html">decision tree structure</a> before we get going. 
 You can see explanations of all the necessary decision tree hacks in this <a href="https://github.com/mcb00/blog/blob/master/supplemental/freedman-gbm-implementation.ipynb">notebook</a>.</p>
 
@@ -328,7 +352,7 @@ You can see explanations of all the necessary decision tree hacks in this <a hre
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Mean-Squared-Error">Mean Squared Error<a class="anchor-link" href="#Mean-Squared-Error"> </a></h3><p>MSE loss produces estimates of the mean target value conditioned on the feature values. Here's the implementation.</p>
+<h3 id="Mean-Squared-Error">Mean Squared Error<a class="anchor-link" href="#Mean-Squared-Error"> </a></h3><p>Mean Squared Error (a.k.a. Least Squares)  loss produces estimates of the mean target value conditioned on the feature values. Here's the implementation.</p>
 
 </div>
 </div>
@@ -403,7 +427,7 @@ You can see explanations of all the necessary decision tree hacks in this <a hre
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Mean-Absolute-Error">Mean Absolute Error<a class="anchor-link" href="#Mean-Absolute-Error"> </a></h3><p>MAE loss produces estimates of the median target value conditioned on the feature values. Here's the implementation.</p>
+<h3 id="Mean-Absolute-Error">Mean Absolute Error<a class="anchor-link" href="#Mean-Absolute-Error"> </a></h3><p>Mean Absolute Error (a.k.a.Least Absolute Deviations) loss produces estimates of the median target value conditioned on the feature values. Here's the implementation.</p>
 
 </div>
 </div>
@@ -478,7 +502,7 @@ You can see explanations of all the necessary decision tree hacks in this <a hre
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Quantile-Loss">Quantile Loss<a class="anchor-link" href="#Quantile-Loss"> </a></h3><p>Quantile loss yields estimates of a given quantile of the target variable conditioned on the features. Here's the implementation.</p>
+<h3 id="Quantile-Loss">Quantile Loss<a class="anchor-link" href="#Quantile-Loss"> </a></h3><p>Quantile loss yields estimates of a given quantile of the target variable conditioned on the features. Here's my implementation.</p>
 
 </div>
 </div>
@@ -566,7 +590,7 @@ You can see explanations of all the necessary decision tree hacks in this <a hre
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Binary-Cross-Entropy">Binary Cross Entropy<a class="anchor-link" href="#Binary-Cross-Entropy"> </a></h3><p>All the previous losses were for regression problems. But we can also do classification, simply by using the right loss function. Here we'll implement binary cross entropy, a.k.a. binary deviance, sometimes abusively called log loss. One thing to remember is that, like logistic regression, our model is really predicting the log odds ratio, not the probability of the positive class. Thus I do an expit transformation before computing loss and the gradients and another one before plotting the predictions.</p>
+<h3 id="Binary-Cross-Entropy-Loss">Binary Cross Entropy Loss<a class="anchor-link" href="#Binary-Cross-Entropy-Loss"> </a></h3><p>The previous losses are useful for regression problems, where the target is numeric. But we can also solve classification problems, simply by swapping in an appropriate loss function. Here we'll implement binary cross entropy, a.k.a. binary deviance, a.k.a. negative binomial log likelihood (sometimes abusively called log loss). One thing to remember is that, as with logistic regression, our model is actually  predicting the log odds ratio, not the probability of the positive class. Thus we use expit transformations (the inverse of logit) whenever probabilities are needed, e.g., when predicting the probability that an observation belongs to the positive class.</p>
 
 </div>
 </div>
@@ -650,7 +674,17 @@ You can see explanations of all the necessary decision tree hacks in this <a hre
 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a></h2><p>Alrighty, there it is, an implementation of the gradient boosting machine that can handle whatever loss function your heart desires (as long as you can write down its derivative). This one was really fun to implement since it solidifies a lot of the (sometimes mathy) ideas we've been covering about gradient boosting, and it removes any remaining doubt about the gradient boost algorithm from Freedman's classic paper. As I mentioned in the intro, in real life we will more or less always be better off using modern boosting frameworks like XGBoost, rather than the classic GBM. And as luck would have it, we'll dive into the details of these modern Newton descent boosting frameworks in future posts.</p>
+<h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a></h2><p>Woohoo! We did it! We finally made it through Freedman's paper in its entirety, and we implemented the generic gradient boosting algorithm which works with any differentiable loss function.
+If you made it this far, great job, gold star!
+By now you hopefully have a pretty solid grasp on  gradient boosting, which is good, because next we're going to dive into the modern Newton descent gradient boosting frameworks like LightGBM and XGBoost.
+Can't wait; see you there!</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="References">References<a class="anchor-link" href="#References"> </a></h2><p>Freedman's 2001 paper: <a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">Greedy Function Approximation: A Gradient Boosting Machine</a></p>
 
 </div>
 </div>
