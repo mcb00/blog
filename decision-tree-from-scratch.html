@@ -499,11 +499,9 @@ $$L_{\text{after split}} = L_L + L_R =  \sum_{i \in I_L} y_i^2 - \frac{1}{n_L} \
 <p>
 $$ \Delta L = L_{\text{after split}} -  L_{\text{before split}} = (L_L + L_R) - L $$
 
-$$  = \sum_{i \in I_L} y_i^2 - \frac{1}{n<em>L} \left ( \sum</em>{i \in I_L} y_i \right )^2</p>
-<ul>
-<li>\sum_{i \in I_R} y_i^2 - \frac{1}{n<em>R} \left ( \sum</em>{i \in I_R} y_i \right )^2</li>
-<li>\left ( \sum_{i \in I} y<em>i^2 - \frac{1}{n} \left ( \sum</em>{i \in I} y_i \right )^2 \right ) $$</li>
-</ul>
+
+$$  = \sum_{i \in I_L} y_i^2 - \frac{1}{n_L} \left ( \sum_{i \in I_L} y_i \right )^2 + \sum_{i \in I_R} y_i^2 - \frac{1}{n_R} \left ( \sum_{i \in I_R} y_i \right )^2 - \left ( \sum_{i \in I} y_i^2 - \frac{1}{n} \left ( \sum_{i \in I} y_i \right )^2 \right ) $$
+</p>
 <p>Since $I = I_L \cup I_R$ the $\sum y^2$ terms cancel and we can simplify.</p>
 $$ \Delta L = - \frac{1}{n_L} \left ( \sum_{i \in I_L} y_i \right )^2 
  - \frac{1}{n_R} \left ( \sum_{i \in I_R} y_i \right )^2
