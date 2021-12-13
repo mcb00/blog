@@ -180,8 +180,7 @@ While random forest uses either regression or classification trees depending on 
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="A-Regression-Tree-in-Action">A Regression Tree in Action<a class="anchor-link" href="#A-Regression-Tree-in-Action"> </a></h2><p>Let's have a closer look at regression trees by  training one on the diabetes dataset from scikit learn. According to the <a href="https://scikit-learn.org/stable/datasets/toy_dataset.html#diabetes-dataset">documentation</a>:</p>
-<blockquote><blockquote><p>Ten baseline variables, age, sex, body mass index, average blood pressure, and six blood serum measurements were obtained for each of n = 442 diabetes patients, as well as the response of interest, a quantitative measure of disease progression one year after baseline.</p>
-</blockquote>
+<blockquote><p>Ten baseline variables, age, sex, body mass index, average blood pressure, and six blood serum measurements were obtained for each of n = 442 diabetes patients, as well as the response of interest, a quantitative measure of disease progression one year after baseline.</p>
 </blockquote>
 <p>First we load the data. To make our lives easier, we'll just use two features:average blood pressure  (bp) and the first blood serum measurement (s1) to predict the target. I'll also rescale the features (to make their values easier for me to read and type). Rescaling features won't affect our tree--one of the reasons trees are awesome (more on that later).</p>
 
