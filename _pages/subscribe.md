@@ -4,8 +4,8 @@ title: Subscribe
 ---
 
 You can subscribe to receive new posts in your inbox by entering your email in the field below. 
-If you're more of a social media consumer, follow using the links in the footer, I post new content on Linkedin and Twitter.
-If you're a hard-core blog reader, you probably already subscribed to the RSS feed, also found in the footer.
+If you prefer social media, I post new blog content on Linkedin and Twitter. Follow using the links in the footer.
+If you're a hard-core blog reader, you probably already subscribed to the RSS feed, also in the footer.
 
 <!-- Begin Mailchimp Signup Form -->
 <link href="//cdn-images.mailchimp.com/embedcode/slim-10_7_dtp.css" rel="stylesheet" type="text/css">
