@@ -3,9 +3,22 @@ layout: page
 title: Subscribe
 ---
 
-You can subscribe to receive new posts in your inbox by entering your email in the field below. 
-If you prefer social media, I post new blog content on Linkedin and Twitter. Follow using the links in the footer.
-If you're a hard-core blog reader, you probably already subscribed to the RSS feed, also in the footer.
+
+<div class="row">
+  <div class="column">
+    <a href="https://twitter.com/mcbwrs"><img src="{{ site.baseurl }}/images/icons8-twitter-48.png" alt="Matt on Twitter"></a> 
+  </div>
+  <div class="column">
+    <a href="https://www.linkedin.com/in/matt-bowers/"><img src="{{ site.baseurl }}/images/icons8-linkedin-48.png" alt="Matt on Linkedin"></a> 
+  </div>
+  <div class="column">
+    <a href="http://www.github.com/mcb00"><img src="{{ site.baseurl }}/images/icons8-github-48.png" alt="Matt on GitHub"></a>
+  </div>
+</div>
+
+You can subscribe to receive new posts in your inbox by entering your email in the form below. 
+If you're a hard core blog fan with a feed reader, you can subscribe to the RSS feed down in the footer.
+And if you prefer social media, I share new posts on Linkedin and Twitter.
 
 <!-- Begin Mailchimp Signup Form -->
 <link href="//cdn-images.mailchimp.com/embedcode/slim-10_7_dtp.css" rel="stylesheet" type="text/css">
