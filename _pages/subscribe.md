@@ -3,6 +3,9 @@ layout: page
 title: Subscribe
 ---
 
+You can subscribe to receive new posts in your inbox by entering your email in the field below. 
+If you're more of a social media consumer, follow using the links in the footer, I post new content on Linkedin and Twitter.
+If you're a hard-core blog reader, you probably already subscribed to the RSS feed, also found in the footer.
 
 <!-- Begin Mailchimp Signup Form -->
 <link href="//cdn-images.mailchimp.com/embedcode/slim-10_7_dtp.css" rel="stylesheet" type="text/css">
@@ -14,7 +17,7 @@ title: Subscribe
 <div id="mc_embed_signup">
 <form action="https://dev.us20.list-manage.com/subscribe/post?u=5212e33f7cd396dd4a742431c&amp;id=0a2f69f3f3" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
     <div id="mc_embed_signup_scroll">
-	<label for="mce-EMAIL">Subscribe</label>
+	<label for="mce-EMAIL">Join the Mailing List</label>
 	<input type="email" value="" name="EMAIL" class="email" id="mce-EMAIL" placeholder="email address" required>
     <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
     <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_5212e33f7cd396dd4a742431c_0a2f69f3f3" tabindex="-1" value=""></div>
