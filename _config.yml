@@ -44,8 +44,10 @@ baseurl: ""
 # Github and twitter are optional:
 minima:
   social_links:
-    twitter: mcbwrs
+    linkedin: matt-bowers
     github: mcb00
+    twitter: mcbwrs
+    
 
 # Set this to true to get LaTeX math equation support
 use_math: true
