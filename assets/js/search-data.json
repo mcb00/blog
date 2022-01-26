@@ -102,11 +102,9 @@
 
   
   
-
-  
-      ,"page1": {
-          "title": "About Me",
-          "content": ". Well howdy! I’m Matt Bowers. I’m a data scientist at Uber where I specialize in using statistical modeling and machine learning to make large-scale telematics data useful. Before Uber I earned an MS in Applied Statistics and a PhD in Atmospheric Sciences at Purdue University where I studied the spatial-temporal correlation structure of tropical convection systems and developed statistical methods for climate research. I was also an Insight Data Science fellow at Silicon Valley in the summer of 2017. .",
+      ,"page0": {
+          "title": "About",
+          "content": ". Welcome to Random Realizations! This blog is a celebration of the fascinating world of data science. I hope you find the content useful, and I hope you enjoy reading along and learning with me! . And me? Well, I’m Matt Bowers. I’m a data scientist at Uber where I solve problems using statistical modeling and machine learning. Over the years I’ve driven product decisions through controlled experimentation and user analytics, built ML products like ETA prediction on large-scale telematics data, and cracked long-standing ML problems in marketplace pricing. Before Uber I earned an MS in Applied Statistics and a PhD in Atmospheric Sciences at Purdue University where I studied the spatial-temporal correlation structure of tropical convection systems and developed statistical methods for climate research. . But enough about me. Let’s get down with some data science! .",
           "url": "https://blog.mattbowers.dev/about/",
           "relUrl": "/about/",
           "date": ""
@@ -115,15 +113,28 @@
   
 
   
+      ,"page1": {
+          "title": "Subscribe",
+          "content": "Sign up below to receive an email whenever I publish a new post. If you’re hard core and have an RSS reader, you can subscribe to the feed down in the footer. Or you can follow me on Linkedin or Twitter where I also share new posts. . * indicates required Email Address * First Name Last Name .",
+          "url": "https://blog.mattbowers.dev/_pages/1-subscribe",
+          "relUrl": "/_pages/1-subscribe",
+          "date": ""
+      }
+      
+  
+
+  
+
+  
+
+  
+
+  
 
   
   
 
   
-
-  
-  
-
   
 
   
@@ -136,7 +147,7 @@
   
 
   
-      ,"page10": {
+      ,"page11": {
           "title": "",
           "content": "Sitemap: {{ “sitemap.xml” | absolute_url }} | .",
           "url": "https://blog.mattbowers.dev/robots.txt",
