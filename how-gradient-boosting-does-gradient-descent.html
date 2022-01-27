@@ -136,7 +136,7 @@ window.onload = wrap_img;
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>In the last two posts, we learned the basics of <a href="https://blog.mattbowers.dev/gradient-boosting-machine-from-scratch">gradient boosting machines</a> and the <a href="https://blog.mattbowers.dev/get-down-with-gradient-descent">gradient descent algorithm</a>.  But we still haven't explicitly addressed what puts the "gradient" in gradient boosting. It turns out that gradient boosting models are using a sort of gradient descent to minimize their loss function; according to <a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">Friedman's classic paper</a>,  they're doing gradient descent in "function space". If you're like me, and this is your first encounter with this idea, then the phrase "gradient descent in function space" is going to sound a little, ahem, mysterious. No worries, friends; we're about to make sense of it all.</p>
+<p>In the last two posts, we learned the basics of <a href="/gradient-boosting-machine-from-scratch">gradient boosting machines</a> and the <a href="/get-down-with-gradient-descent">gradient descent algorithm</a>.  But we still haven't explicitly addressed what puts the "gradient" in gradient boosting. It turns out that gradient boosting models are using a sort of gradient descent to minimize their loss function; according to <a href="https://statweb.stanford.edu/~jhf/ftp/trebst.pdf">Friedman's classic paper</a>,  they're doing gradient descent in "function space". If you're like me, and this is your first encounter with this idea, then the phrase "gradient descent in function space" is going to sound a little, ahem, mysterious. No worries, friends; we're about to make sense of it all.</p>
 <p>Understanding the underlying mechanics of gradient boosting as a form of gradient descent will empower us to train our models with custom loss functions. This opens up many interesting possibilities including doing not only regression and classification, but also predicting quantiles, prediction intervals, and even the conditional probability distribution of the response variable.</p>
 
 </div>
@@ -144,7 +144,7 @@ window.onload = wrap_img;
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Generalized-intuition-for-gradient-boosting">Generalized intuition for gradient boosting<a class="anchor-link" href="#Generalized-intuition-for-gradient-boosting"> </a></h2><p>In my earlier post on <a href="https://blog.mattbowers.dev/gradient-boosting-machine-from-scratch">building a gradient boosting model from scratch</a>, we established the intuition for how gradient boosting works in a regression problem. In this post we're going to generalize the ideas we encountered in the regression context, so check out the earlier post if you're not already familiar with gradient boosting for regression. In the following sections we'll build up the intuition for gradient boosting in general terms, and then we'll be able to state the gradient boosting algorithm in a form that can fit models to customized loss functions.</p>
+<h2 id="Generalized-intuition-for-gradient-boosting">Generalized intuition for gradient boosting<a class="anchor-link" href="#Generalized-intuition-for-gradient-boosting"> </a></h2><p>In my earlier post on <a href="/gradient-boosting-machine-from-scratch">building a gradient boosting model from scratch</a>, we established the intuition for how gradient boosting works in a regression problem. In this post we're going to generalize the ideas we encountered in the regression context, so check out the earlier post if you're not already familiar with gradient boosting for regression. In the following sections we'll build up the intuition for gradient boosting in general terms, and then we'll be able to state the gradient boosting algorithm in a form that can fit models to customized loss functions.</p>
 
 </div>
 </div>
@@ -226,7 +226,7 @@ $$F_{m+1}(\mathbf{X}) = F_{m}(\mathbf{X}) + \eta h_{m}(\mathbf{X})$$
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="Wait,-in-what-sense-is-this-doing-gradient-descent?">Wait, in what sense is this doing gradient descent?<a class="anchor-link" href="#Wait,-in-what-sense-is-this-doing-gradient-descent?"> </a></h2><p>In my <a href="https://blog.mattbowers.dev/get-down-with-gradient-descent">previous post</a>, we learned how to use gradient descent to iteratively update model parameters to find a model that minimizes the loss function. We could write the update rule as</p>
+<h2 id="Wait,-in-what-sense-is-this-doing-gradient-descent?">Wait, in what sense is this doing gradient descent?<a class="anchor-link" href="#Wait,-in-what-sense-is-this-doing-gradient-descent?"> </a></h2><p>In my <a href="/get-down-with-gradient-descent">previous post</a>, we learned how to use gradient descent to iteratively update model parameters to find a model that minimizes the loss function. We could write the update rule as</p>
 <p>
 $$ \mathbf{\theta}_{t+1} = \mathbf{\theta}_{t} + \eta ( - \nabla_{\mathbf{\theta}} L(\mathbf{y}, \mathbf{\hat{y}}_{\mathbf{\theta}_{t}}) ) $$
 </p>
@@ -270,7 +270,7 @@ Instead we train a crappy model to predict the negative gradient of the loss wit
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="So-why-did-we-fit-the-crappy-models-to-the-residuals-in-our-regression-GBM?">So why did we fit the crappy models to the residuals in our regression GBM?<a class="anchor-link" href="#So-why-did-we-fit-the-crappy-models-to-the-residuals-in-our-regression-GBM?"> </a></h2><p>In my first post on <a href="https://blog.mattbowers.dev/gradient-boosting-machine-from-scratch">gradient boosting machines</a>, in the interest of simplicity I left one key aspect of the problem unaddressed, that is, what loss function were we using to train that GBM?  It turns out that because of the way we built our GBM, without knowing it we were actually using a mean squared error (MSE) loss function.</p>
+<h2 id="So-why-did-we-fit-the-crappy-models-to-the-residuals-in-our-regression-GBM?">So why did we fit the crappy models to the residuals in our regression GBM?<a class="anchor-link" href="#So-why-did-we-fit-the-crappy-models-to-the-residuals-in-our-regression-GBM?"> </a></h2><p>In my first post on <a href="/gradient-boosting-machine-from-scratch">gradient boosting machines</a>, in the interest of simplicity I left one key aspect of the problem unaddressed, that is, what loss function were we using to train that GBM?  It turns out that because of the way we built our GBM, without knowing it we were actually using a mean squared error (MSE) loss function.</p>
 <p>
 $$L(\mathbf{y}, \hat{\mathbf{y}}) =  \frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2 $$
 </p>
