@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>How to Understand XGBoost | Random Realizations</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="How to Understand XGBoost" />
+<meta name="author" content="Matt Bowers" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In-depth intuition and mathematical derivation of the XGBoost algorithm" />
+<meta property="og:description" content="In-depth intuition and mathematical derivation of the XGBoost algorithm" />
+<link rel="canonical" href="https://blog.mattbowers.dev/how-to-understand-xgboost" />
+<meta property="og:url" content="https://blog.mattbowers.dev/how-to-understand-xgboost" />
+<meta property="og:site_name" content="Random Realizations" />
+<meta property="og:image" content="https://blog.mattbowers.dev/images/20220313_thumbnail.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-03-13T00:00:00-06:00" />
+<script type="application/ld+json">
+{"dateModified":"2022-03-13T00:00:00-06:00","datePublished":"2022-03-13T00:00:00-06:00","url":"https://blog.mattbowers.dev/how-to-understand-xgboost","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.mattbowers.dev/how-to-understand-xgboost"},"headline":"How to Understand XGBoost","image":"https://blog.mattbowers.dev/images/20220313_thumbnail.jpg","author":{"@type":"Person","name":"Matt Bowers"},"description":"In-depth intuition and mathematical derivation of the XGBoost algorithm","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://blog.mattbowers.dev/feed.xml" title="Random Realizations" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','G-JKG69E687S','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+<link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Random Realizations</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/_pages/1-subscribe">Subscribe</a><a class="page-link" href="/categories/">Tags</a><a class="page-link" href="/search/">Search</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">How to Understand XGBoost</h1><p class="page-description">In-depth intuition and mathematical derivation of the XGBoost algorithm</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-03-13T00:00:00-06:00" itemprop="datePublished">
+        Mar 13, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      15 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#gradient boosting">gradient boosting</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/mcb00/blog/tree/master/_notebooks/2022-03-13-how-to-understand-xgboost.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/mcb00/blog/blob/master/_notebooks/2022-03-13-how-to-understand-xgboost.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-03-13-how-to-understand-xgboost.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="/images/copied_from_nb/nb_images/20220313_thumbnail.jpg" alt="" title="Tree branches on a chilly day in Johnson City, TN" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Ahh, XGBoost, what an absolutely stellar implementation of gradient boosting. Once Tianqi Chen and Carlos Guestrin of the University of Washington published the <a href="https://www.kdd.org/kdd2016/papers/files/rfp0697-chenAemb.pdf">XGBoost paper</a> and shared the <a href="https://github.com/dmlc/xgboost">open source code</a> in the mid 2010's, the algorithm quickly gained adoption in the ML community, appearing in over half of winning Kagle submissions in 2015.
+Nowadays it's certainly among the most popular gradient boosting libraries, along with LightGBM and CatBoost, although the highly scientific indicator of <a href="https://www.githubcompare.com/dmlc/xgboost+microsoft/lightgbm+catboost/catboost">GitHub stars per year</a> indicates that it is in fact the most beloved gradient boosting package of all. Since it was the first of the modern popular boosting frameworks, and since <a href="https://blog.dataiku.com/the-many-flavors-of-gradient-boosting-algorithms">benchmarking</a> indicates that no other boosting algorithm outperforms it, we can comfortably focus our attention on understanding XGBoost.</p>
+<p>The XGBoost authors identify two key aspects of a machine learning system: (1) a flexible statistical model and (2) a scalable learning system to fit that model using data. XGBoost improves on both of these aspects, providing a more flexible and feature-rich statistical model and building a truly scalable system to fit it.
+In this post we're going to focus on the statistical modeling innovations, outlining the key differences from the classic gradient boosting machine and divinginto the mathematical derivation of the XGBoost learning algorithm. If you're not already familiar with <a href="/gradient-boosting-machine-from-scratch">gradient boosting</a>, go back and read the earlier posts in the series before jumping in here.</p>
+<p>Buckle up, dear reader. Today we understand how XGBoost works, no hand waving required.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="XGBoost-is-a-Gradient-Boosting-Machine">XGBoost is a Gradient Boosting Machine<a class="anchor-link" href="#XGBoost-is-a-Gradient-Boosting-Machine"> </a></h2><p>At a high level, XGBoost is an iteratively constructed composite model, just like the classic gradient boosting machine we discussed back in the <a href="/gradient-boosting-machine-from-scratch">GBM post</a> . The final model takes the form</p>
+<p>
+$$\hat{y}_i = F(\mathbf{x}_i) = b + \eta \sum_{k=1}^K f_k(\mathbf{x}_i) $$
+</p>
+<p>where $b$ is the base prediction, $\eta$ is the learning rate hyperparameter that helps control overfitting by reducing the contributions of each booster, and each of the $K$ boosters $f_k$ is  a decision tree. To help us connect the dots between theory and code, whenever we encounter new hyperparameters, I'll point out their names from the <a href="https://xgboost.readthedocs.io/en/stable/parameter.html">XGBoost Parameter Documentation</a>. So, $b$ can be set by <code>base_score</code>, and $\eta$ is set by either <code>eta</code> or <code>learning_rate</code>.</p>
+<p>XGBoost introduces two key statistical learning improvements over the classic gradient boosting model.  First, it reimagines the gradient descent algorithm used for training, and second it uses a custom-built decision tree with extra functionality as its booster. We'll dive into each of these key innovations in the following sections.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Descent-Algorithm-Innovations">Descent Algorithm Innovations<a class="anchor-link" href="#Descent-Algorithm-Innovations"> </a></h2><h3 id="Regularized-Objective-Function">Regularized Objective Function<a class="anchor-link" href="#Regularized-Objective-Function"> </a></h3><p>In the post on <a href="/gradient-boosting-machine-with-any-loss-function">GBM with any loss function</a>, we looked at loss functions of the form $\sum_i l(y_i,\hat{y}_i)$ which compute some distance between targets $y_i$ and predictions $\hat{y}_i$ and sum them up over the training dataset. XGBoost introduces regularization into the objective function so that the objective takes the form</p>
+<p>
+$$ L = \sum_i l(y_i,\hat{y}_i) + \sum_k \Omega(f_k) $$
+</p>
+<p>where $l$ is some twice-differentiable loss function. $\Omega$ is a regularization that penalizes the complexity of each tree booster, taking the form</p>
+<p>
+$$ \Omega(f) = \gamma T + \frac{1}{2} \lambda ||w||^2 $$
+</p>
+<p>where $T$ is the number of leaf nodes and $||w||^2$ is the squared sum of the  leaf prediction values. This introduces two new hyperparameters: $\gamma$ which penalizes the number of leaf nodes and $\lambda$ which is the L-2 regularization parameter for leaf predicted values. These are set bby <code>gamma</code> and <code>reg_lambbda</code> in the XGBoost parametrization. Together, these provide powerful new controls to reduce overfitting due to overly complex tree boosters. Note that $\gamma=\lambda=0$ reduces the objective back to an unregularized loss function as used in the classic GBM.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Newton's-Method">Newton's Method<a class="anchor-link" href="#Newton's-Method"> </a></h3><p>As we'll see soon, XGBoost uses <a href="https://en.wikipedia.org/wiki/Newton%27s_method_in_optimization">Newton's Method</a> to minimize its objective function, so let's start with a quick refresher.</p>
+<p>Newton's method is an iterative procedure for minimizing a function $s(x)$. At each step
+we have some input $x_t$, and our goal is to find a nudge value $u$ such that</p>
+<p>
+$$ s(x_t + u) \le s(x_t)$$
+</p>
+<p>To find a good nudge value $u$, we generate a local quadratic approximation of the function in the neighborhood of the input $x_t$, and then we find the input value that would bring us to the minimum of the quadratic approximation.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="/images/copied_from_nb/nb_images/20220313_newton.png" alt="" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The figure shows a single Newton step where we start at $x_t$, find the local quadratic approximation, and then jump a distance $u$ along the $x$-axis to land at the minimum of the quadratic. If we iterate in this way, we are likely to land close to the minimum of $s(x)$.</p>
+<p>So how do we compute the quadratic approximation? We use the second order Taylor series expansion of $s(x)$ near the point $x_t$.</p>
+<p>
+$$ s(x_t + u) \approx  s(x_t) + s'(x_t)u + \frac{1}{2} s''(x_t) u^2 $$
+</p>
+<p>To find the nudge value $u$ that minimizes the quadratic approximation, we can take the derivative with respect to $u$, set it to zero, and solve for $u$.</p>
+<p>
+$$ 0 = \frac{d}{du}  \left ( s(x_t) + s'(x_t)u + \frac{1}{2} s''(x_t) u^2 \right ) = s'(x_t) + s''(x_t) u $$
+</p>
+<p>
+$$\rightarrow u^* = -\frac{s'(x_t)}{s''(x_t)} $$
+</p>
+<p>And as long as $s''(x_t)&gt;0$ (i.e., the parabola is pointing up), $ s(x_t + u^*) \le s(x_t)$.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Tree-Boosting-with-Newton's-Method">Tree Boosting with Newton's Method<a class="anchor-link" href="#Tree-Boosting-with-Newton's-Method"> </a></h3><p>This lands us at the heart of XGBoost, which uses Newton's method, rather than gradient descent, to guide each round of boosting. This explanation will correspond very closely to section 2.2 of the XGBoost paper, but here I'll explicitly spell out some of the intermediate steps which are omitted from their derivation, and you'll get some additional commentary from me along the way.</p>
+<h4 id="Newton-Descent-in-Tree-Space">Newton Descent in Tree Space<a class="anchor-link" href="#Newton-Descent-in-Tree-Space"> </a></h4><p>Suppose we've done $t-1$ boosting rounds, and we want to add the $t$-th booster to our composite model. Our current model's prediction for instance $i$ is $\hat{y}_i^{(t-1)}$. If we add a new tree booster $f_t$ to our model, the objective function would give</p>
+<p>
+$$ L^{(t)} = \sum_{i=1}^n l(y_i, \hat{y}_i^{(t-1)} + f_t(\mathbf{x}_i)) + \Omega(f_t) $$
+</p>
+<p>We need to choose $f_t$ so that it decreases the loss, i.e. we want</p>
+<p>
+$$ l(y_i, \hat{y}_i^{(t-1)} + f_t(\mathbf{x}_i)) \le l(y_i, \hat{y}_i^{(t-1)})$$
+</p>
+<p>Does that sound familiar? In the previous section we used Newton's method to find a value of $u$ that would make $s(x_t + u) \le s(x_t)$. Let's try the same thing with our loss function.
+To be explicit, the parallels are: $s(\cdot) \rightarrow l(y_i, \cdot)$, $x_t \rightarrow \hat{y}_i^{(t-1)}$, and $u \rightarrow f_t(\mathbf{x}_i)$.</p>
+<p>Let's start by finding the second order Taylor series approximation for the loss around the point $\hat{y}_i^{(t-1)}$.</p>
+<p>
+$$ l(y_i, \hat{y}_i^{(t-1)} + f_t(\mathbf{x}_i)) \approx l(y_i, \hat{y}_i^{(t-1)}) + g_i f_t(\mathbf{x}_i) + \frac{1}{2} h_i f_t(\mathbf{x}_i)^2 $$
+</p>
+<p>where</p>
+<p>
+$$ g_i = \frac{\partial}{\partial \hat{y}_i^{(t-1)}} l(y_i, \hat{y}_i^{(t-1)})$$
+</p>
+<p>and</p>
+<p>
+$$ h_i = \frac{\partial}{\partial^2 \hat{y}_i^{(t-1)}} l(y_i, \hat{y}_i^{(t-1)})$$
+</p>
+<p>are the first and second order partial derivatives of the loss with respect to the current predictions. The XGBoost paper calls these the gradients and hessians, respectively. Remember that when we specify an actual loss function to use, we would also specify the functional form of the gradients and hessians, so that they are directly computable.</p>
+<p>Now we can go back and substitute our quadratic approximation in for the loss function to get an approximation of the objective function in the neighborhood of $\hat{y}_i^{(t-1)}$..</p>
+<p>
+$$ L^{(t)} \approx \sum_{i=1}^n [l(y_i, \hat{y}_i^{(t-1)}) + g_i f_t(\mathbf{x}_i) + \frac{1}{2} h_i f_t(\mathbf{x}_i)^2] + \Omega(f_t) $$
+</p>
+<p>Since $l(y_i,\hat{y}_i^{(t-1)})$ is constant regardless of our choice of $f_t$, we can drop it and instead work with the modified objective, which gives us Equation (3) from the paper.</p>
+<p>
+$$ \tilde{L}^{(t)} = \sum_{i=1}^n [ g_i f_t(\mathbf{x}_i) + \frac{1}{2} h_i f_t(\mathbf{x}_i)^2] + \Omega(f_t) $$
+</p>
+<p>Now the authors are about to do something great. They're about to show how to directly compute the optimal prediction values for the leaf nodes of $f_t$. We'll circle back in a moment about how we find a good structure for $f_t$, i.e. good node splits, but we're going to find the optimal predicted values for any tree structure having $T$ terminal nodes.
+Let $I_j$ denote the set of instances $i$ that are in the $j$-th leaf node of $f_t$. 
+Then we can rewrite the objective.</p>
+<p>
+$$ \tilde{L}^{(t)} = \sum_{j=1}^T \left [ \sum_{i \in I_j} g_i f_t(\mathbf{x}_i) + \frac{1}{2}  \sum_{i \in I_j} h_i f_t(\mathbf{x}_i)^2 \right ] + \Omega(f_t)$$
+</p>
+<p>We notice that for all instances in $I_j$, the tree yields the same predicted value $f_t(\mathbf{x}_i)=w_j$. Substituting in $w_j$ for the predicted values and expanding $\Omega(f_t)$ we get</p>
+<p>
+$$ \tilde{L}^{(t)} = \sum_{j=1}^T \left [ \sum_{i \in I_j} g_i w_j + \frac{1}{2}  \sum_{i \in I_j} h_i w_j^2 \right ] + \gamma T + \frac{1}{2} \lambda \sum_{j=1}^T w_j^2$$
+</p>
+<p>Rearranging terms we obtain Equation (4).</p>
+<p>
+$$ \tilde{L}^{(t)} = \sum_{j=1}^T \left [ w_j \sum_{i \in I_j} g_i + \frac{1}{2}  w_j^2 \left ( \sum_{i \in I_j} h_i + \lambda \right )  \right ] + \gamma T $$
+</p>
+<p>For each leaf node $j$, our modified objective function is quadratic in $w_j$. To find the optimal predicted values we take the derivative, set to zero, and solve for $w_j$.</p>
+<p>
+$$ 0 = \frac{d}{dw_j} \left [ w_j \sum_{i \in I_j} g_i + \frac{1}{2}  w_j^2 \left ( \sum_{i \in I_j} h_i + \lambda \right )  \right ] = \left ( \sum_{i \in I_j} h_i + \lambda \right ) w_j + \sum_{i \in I_j} g_i $$
+</p>
+<p>This yields Equation (5).</p>
+<p>
+$$ w_j^* = - \frac{\sum_{i \in I_j} g_i } {\sum_{i \in I_j} h_i + \lambda } $$
+</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Split-Finding">Split Finding<a class="anchor-link" href="#Split-Finding"> </a></h4><p>Now that we know how to find the optimal predicted value for any leaf node, we need to identify a criterion for finding a good tree structure, which boils down to finding the best split for a given node. 
+Back in the <a href="/decision-tree-from-scratch">decision tree from scratch</a> post, we derived a split evaluation metric based on the reduction in the objective function associated with a particular split.<br />
+To do that, first we need a way to compute the objective function given a particular tree structure.  Substituting the optimal predicted values $w_j^*$ into the objective function, we get Equation (6).</p>
+<p>
+$$ \tilde{L}^{(t)} = -\frac{1}{2} \sum_{j=1}^T \frac{ (\sum_{i \in I_j} g_i )^2 } {\sum_{i \in I_j} h_i + \lambda} + \gamma T $$
+</p>
+<p>We can then evaluate potential splits by comparing the objective before making a split to the objective after making a split, where the split with the maximum reduction in objective (a.k.a. gain) is best.</p>
+<p>More formally, let $I$ be the set of $n$ data instances in the current node, and let $I_L$ and $I_R$ be the instances that fall into the left and right child nodes of a proposed split.
+Let $L$ be the total loss for all instances in the node, while $L_L$ and $L_R$ are the losses for the left and right child nodes.
+The total loss contributed by instances in node $I$ prior to any split is</p>
+<p>
+$$L_{\text{before split}} = -\frac{1}{2} \frac{ (\sum_{i \in I} g_i )^2 } {\sum_{i \in I} h_i + \lambda} + \gamma $$
+</p>
+<p>And the loss after splitting $I$ into $I_L$ and $I_R$ is</p>
+<p>
+$$L_{\text{after split}} = L_L + L_R = -\frac{1}{2}  \frac{ (\sum_{i \in I_L} g_i )^2 } {\sum_{i \in I_L} h_i + \lambda} -\frac{1}{2}  \frac{ (\sum_{i \in I_R} g_i )^2 } {\sum_{i \in I_R} h_i + \lambda} + 2 \gamma $$
+</p>
+<p>The gain from this split is then</p>
+<p>
+$$ \Delta L = L_{\text{before split}} -  L_{\text{after split}} = L - (L_L + L_R)$$
+
+
+$$\Delta L = \frac{1}{2} \left [ \frac{ (\sum_{i \in I_L} g_i )^2 } {\sum_{i \in I_L} h_i + \lambda} + \frac{ (\sum_{i \in I_R} g_i )^2 } {\sum_{i \in I_R} h_i + \lambda} - \frac{ (\sum_{i \in I_L} g_i )^2 } {\sum_{i \in I_L} h_i + \lambda} \right ] - \gamma $$
+</p>
+<p>which is Equation (7) from the paper. In practice it makes sense to accept a split only if the gain is positive, thus the $\gamma$ parameter sets the minimum gain required to make a further split. This is why $\gamma$ can be set with the parameter <code>gamma</code> or the more descriptive<code>min_loss_split</code>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Tree-Booster-Innovations">Tree Booster Innovations<a class="anchor-link" href="#Tree-Booster-Innovations"> </a></h2><h3 id="Missing-Values-and-Sparsity-Aware-Split-Finding">Missing Values and Sparsity-Aware Split Finding<a class="anchor-link" href="#Missing-Values-and-Sparsity-Aware-Split-Finding"> </a></h3><p>The XGBoost paper also introduces a modified algorithm for tree split finding which explicitly handles missing feature values. Recall that in order to find the best threshold value for a given feature, we can simply try all possible threshold values, recording the score for each. If some feature values are missing, the XGBoost split finding algorithm simply scores each threshold twice: once with missing value instances in the left node and once with them in the right node. The best split will then specify both the threshold value and to which node instances with missing values should be assigned. The paper calls this the sparsity aware split finding routine, which is defined as Algorithm 2.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Preventing-Further-Splitting">Preventing Further Splitting<a class="anchor-link" href="#Preventing-Further-Splitting"> </a></h3><p>In addition to <code>min_loss_split</code> discussed above, XGBoost offers another parameter for limiting further tree splitting called <code>min_child_weight</code>. This name is a little confusing to me because the word "weight" has various meanings. In the context of this parameter, "weight" refers to the sum of the hessians $\sum h_i$ over instances in the node. For squared error loss $h_i=1$, so this is equivalent to the number of samples. Thus this parameter generalizes the notion of the minimum number of samples allowed in a terminal node.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Sampling">Sampling<a class="anchor-link" href="#Sampling"> </a></h3><p>XGBoost takes a cue from Random Forest and introduces both column and row subsampling. These sampling methods can prevent overfitting and reduce training time by limiting the amount of data to be processed during boosting.</p>
+<p>Like random forest, XGBoost implements column subsampling, which limits tree split finding to randomly selected subsets of features. XGBoost provides column sampling for each tree, for each depth level within a tree, and for each split point within a tree, controlled by <code>colsample_bytree</code>, <code>colsample_bbylevel</code>, and <code>colsample_bbynode</code> respectively.</p>
+<p>One interesting distinction is that XGBoost implements row sampling without replacement using <code>subbsample</code>, whereas random forest uses bootstrapping. The choice to bootstrap rows in RF probably spurred from a desire to use as much data as possible while training on the smaller datasets of the 1990's when RF was developed. With larger datasets and the ability to generate a large number of trees, XGBoost simply takes a subsample of rows for each tree.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Scalability">Scalability<a class="anchor-link" href="#Scalability"> </a></h2><p>Even though we're focused on statistical learning, I figured I'd comment on why XGBoost is highly scalable. Basically it boils down to efficient, parallelizable, and distributable methods for growing trees. You'll notice there is a <code>tree_method</code> parameter which allows you to choose between the greedy exact algorithm (like the one we discussed in the decision tree from scratch post) and the approximate algorithm, which offers various scalability-related functionality, notably including the ability to consider only a small number of candidate split points instead of trying all possible splits. The algorithm also uses clever tricks like pre-sorting data for split finding and caching frequently needed values.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Why-XGBoost-is-so-Successful">Why XGBoost is so Successful<a class="anchor-link" href="#Why-XGBoost-is-so-Successful"> </a></h3><p>As I mentioned in the intro, XGBoost is simply a very good implementation of the gradient boosting tree model. Therefore it inherits all the benefits of <a href="/consider-the-decision-tree">decision trees and tree ensembles</a>, while making even further improvements over the classic gradient boosting machine. These improvements boil down to</p>
+<ol>
+<li>more ways to control overfitting</li>
+<li>elegant handling of custom objectives</li>
+<li>scalability</li>
+</ol>
+<p>First, XGBoost introduces two new tree regularization hyperparameters $\gamma$ and $\lambda$ which are baked directly into its objective function. Combining these with the additional column and row sampling functionality provides a variety of ways to reduce overfitting.</p>
+<p>Second, the XGBoost formulation provides a much more elegant way to train models on custom objective functions. 
+Recall that for <a href="/gradient-boosting-machine-with-any-loss-function">custom objectives</a>, the classic GBM finds tree structure by fitting a squared error decision tree to the gradients of the loss function and then sets each leaf's predicted value by running a numerical optimization routine to find the optimal predicted value.</p>
+<p>The XGBoost formulation improves on this two-stage approach by unifying the generation of tree structure and predicted values.  Both the split scoring metric and the predicted values are directly computable from the instance gradient and hessian values, which are connected directly back to the overall training objective. This also removes the need for additional numerical optimizations, which contributes to speed, stability, and scalability.</p>
+<p>Finally, speaking of scalability, XGBoost emerged at a time when industrial dataset size was exploding. Many use cases require scalable ML systems, and all use cases benefit from faster training and higher model development velocity.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a></h2><p>Well, there you go, those are the salient ideas behind XGBoost, the gold standard in gradient boosting model implementations. Hopefully now we all understand the mathematical basis for the algorithm and appreciate the key improvements it makes over the classic GBM. If you want to go even deeper, you can join us for the next post where we'll roll up our sleeves and implement XGBoost entirely  from scratch.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="References">References<a class="anchor-link" href="#References"> </a></h2><p><a href="https://www.kdd.org/kdd2016/papers/files/rfp0697-chenAemb.pdf">The XGBoost paper</a></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Exercise">Exercise<a class="anchor-link" href="#Exercise"> </a></h2><p>Proove that the XGBoost Newton Descent generalizes the classic GBM gradient descent. Hint: show that XGBoost with a squared error objective and no regularization reduces to the classic GBM.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="mcb00/blog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/how-to-understand-xgboost" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>RSS</span>
+          </a>
+        </p>
+        <ul class="contact-list">
+          
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>A blog about data science, statistics, machine learning, and the scientific method.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/mcb00" target="_blank" title="mcb00"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/matt-bowers" target="_blank" title="matt-bowers"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li><li><a rel="me" href="https://twitter.com/mcbwrs" target="_blank" title="mcbwrs"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
