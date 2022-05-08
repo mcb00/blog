@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>XGBoost from scratch | Random Realizations</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="XGBoost from scratch" />
+<meta name="author" content="Matt Bowers" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A walkthrough of my from-scratch python implementation of XGBoost." />
+<meta property="og:description" content="A walkthrough of my from-scratch python implementation of XGBoost." />
+<link rel="canonical" href="https://blog.mattbowers.dev/xgboost-from-scratch" />
+<meta property="og:url" content="https://blog.mattbowers.dev/xgboost-from-scratch" />
+<meta property="og:site_name" content="Random Realizations" />
+<meta property="og:image" content="https://blog.mattbowers.dev/images/20220507_thumbnail.jpg" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-07T00:00:00-05:00" />
+<script type="application/ld+json">
+{"dateModified":"2022-05-07T00:00:00-05:00","datePublished":"2022-05-07T00:00:00-05:00","url":"https://blog.mattbowers.dev/xgboost-from-scratch","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://blog.mattbowers.dev/xgboost-from-scratch"},"headline":"XGBoost from scratch","image":"https://blog.mattbowers.dev/images/20220507_thumbnail.jpg","author":{"@type":"Person","name":"Matt Bowers"},"description":"A walkthrough of my from-scratch python implementation of XGBoost.","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://blog.mattbowers.dev/feed.xml" title="Random Realizations" /><!-- the google_analytics_id gets auto inserted from the config file -->
+
+
+
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','G-JKG69E687S','auto');ga('require','displayfeatures');ga('send','pageview');</script>
+
+<link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Random Realizations</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a><a class="page-link" href="/_pages/1-subscribe">Subscribe</a><a class="page-link" href="/categories/">Tags</a><a class="page-link" href="/search/">Search</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">XGBoost from scratch</h1><p class="page-description">A walkthrough of my from-scratch python implementation of XGBoost.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-05-07T00:00:00-05:00" itemprop="datePublished">
+        May 7, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      12 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#gradient boosting">gradient boosting</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-wrap flex-justify-end">
+          <div class="px-2">
+
+    <a href="https://github.com/mcb00/blog/tree/master/_notebooks/2022-05-07-xgboost-from-scratch.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/mcb00/blog/blob/master/_notebooks/2022-05-07-xgboost-from-scratch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-05-07-xgboost-from-scratch.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="/images/copied_from_nb/nb_images/20220507_thumbnail.jpg" alt="" title="A weathered tree reaches toward the sea at Playa Mal País" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Well, dear reader, it's that time again, time for us to do a seemingly unnecessary scratch build of a popular algorithm that most people would simply import from the library without a second thought. But readers of this blog are not most people.  Of course you know that when we do scratch builds, it's not for the hell of it, it's for the purpose of demystification. To that end, today we are going to implement XGBoost from scratch in python, using only numpy and pandas.</p>
+<p>Specifically we're going to implement the core statistical learning algorithm of XGBoost, including most of the key hyperparameters and their functionality. Our implementation will also support user-defined custom objective functions, meaning that it can perform regression, classification, and whatever exotic learning tasks you can dream up, as long as you can write down a twice-differentiable objective function. We'll refrain from implementing some simple features like column subsampling which will be left to you, gentle reader, as exercises. In terms of tree methods, we're going to implement the exact tree-splitting algorithm, leaving the sparsity-aware method (used to handle missing feature values) and the approximate method (used for scalability) as exercises or maybe topics for future posts.</p>
+<p>As always, if something is unclear, try backtracking through the previous posts on gradient boosting and decision trees to clarify your intuition. We've already built up all the statistical and computational background needed to make sense of this scratch build. Here are the most important prerequisite posts:</p>
+<ol>
+<li><a href="/gradient-boosting-machine-from-scratch">Gradient Boosting Machine from Scratch</a> </li>
+<li><a href="/decision-tree-from-scratch">Decision Tree From Scratch</a> </li>
+<li><a href="/how-to-understand-xgboost">How to Understand XGBoost</a></li>
+</ol>
+<p>Great, let's do this.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="The--XGBoost-Model-Class">The  XGBoost Model Class<a class="anchor-link" href="#The--XGBoost-Model-Class"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We begin with the user-facing API for our model, a class called <code>XGBoostModel</code> which will implement gradient boosting and prediction.  To be more consistent with the XGBoost library, we'll pass hyperparameters to our model in a parameter dictionary, so our init method is going to pull relevant parameters out of the dictionary and set them as object attributes. Note the use of python's <code>defaultdict</code> so we don't have to worry about handling key errors if we try to access a parameter that the user didn't set in the dictionary.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span> 
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">XGBoostModel</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;XGBoost from Scratch</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;subsample&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;subsample&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;base_score&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;base_score&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;max_depth&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;max_depth&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The fit method, based on our classic GBM,  takes a feature dataframe, a target vector, the objective function, and the number of boosting rounds as arguments. The user-supplied objective function should be an object with loss, gradient, and hessian methods, each of which takes a target vector and a prediction vector as input; the loss method should return a scalar loss score, the gradient method should return a vector of gradients, and the  hessian method should return a vector of hessians.</p>
+<p>In contrast to boosting in the classic GBM, instead of computing residuals between the current predictions and the target, we compute gradients and hessians of the loss function with respect to the current predictions, and instead of predicting residuals with a decision tree, we fit a special XGBoost tree booster (which we'll implement in a moment) using the gradients and hessians. I've also added row subsampling by drawing a random subset of instance indices and passing them to the tree booster during each boosting round. The rest of the fit method is the same as the classic GBM, and the predict method is identical too.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">num_boost_round</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">current_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_prediction</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">boosters</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_boost_round</span><span class="p">):</span>
+        <span class="n">gradients</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">current_predictions</span><span class="p">)</span>
+        <span class="n">hessians</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">hessian</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">current_predictions</span><span class="p">)</span>
+        <span class="n">sample_idxs</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsample</span> <span class="o">==</span> <span class="mf">1.0</span> \
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> 
+                                 <span class="n">size</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subsample</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span> 
+                                 <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">booster</span> <span class="o">=</span> <span class="n">TreeBooster</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">gradients</span><span class="p">,</span> <span class="n">hessians</span><span class="p">,</span> 
+                              <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">sample_idxs</span><span class="p">)</span>
+        <span class="n">current_predictions</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boosters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">booster</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">] train loss = </span><span class="si">{</span><span class="n">objective</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">current_predictions</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_prediction</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> 
+            <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">booster</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boosters</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+<span class="n">XGBoostModel</span><span class="o">.</span><span class="n">fit</span> <span class="o">=</span> <span class="n">fit</span>
+<span class="n">XGBoostModel</span><span class="o">.</span><span class="n">predict</span> <span class="o">=</span> <span class="n">predict</span>            
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>All we have to do now is implement the tree booster.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="The-XGBoost-Tree-Booster">The XGBoost Tree Booster<a class="anchor-link" href="#The-XGBoost-Tree-Booster"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The XGBoost tree booster is a modified version of the decision tree that we built in the decision tree from scratch post. Like the decision tree, we recursively build a binary tree structure by finding the best split rule for each node in the tree. The main difference is the criterion for evaluating splits and the way that we define a leaf's predicted value. Instead of being functions of the target values of the instances in each node, the criterion and predicted values are functions of the instance gradients and hessians. Thus we need only make a couple of modifications to our previous decision tree implementation to create the XGBoost tree booster.</p>
+<h3 id="Initialization-and-Inserting-Child-Nodes">Initialization and Inserting Child Nodes<a class="anchor-link" href="#Initialization-and-Inserting-Child-Nodes"> </a></h3><p>Most of the init method is just parsing the parameter dictionary to assign parameters as object attributes. The one notable difference from our decision tree is in the way we define the node's predicted value. We define <code>self.value</code> according to equation 5 of the XGBoost paper, a simple function of the gradient and hessian values of the instances in the current node. Of course the init also goes on to build the tree via the maybe insert child nodes method. This method is nearly identical to the one we implemented for our decision tree. So far so good.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">TreeBooster</span><span class="p">():</span>
+ 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">,</span> <span class="n">idxs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">=</span> <span class="n">max_depth</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;max_depth must be nonnegative&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_child_weight</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;min_child_weight&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;min_child_weight&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;reg_lambda&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;reg_lambda&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colsample_bynode</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;colsample_bynode&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;colsample_bynode&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="n">idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idxs</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">idxs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="o">-</span><span class="n">g</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">)</span> <span class="c1"># Eq (5)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_insert_child_nodes</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_maybe_insert_child_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_better_split</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span> <span class="k">return</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">split_feature_idx</span><span class="p">]</span>
+        <span class="n">left_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">right_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">TreeBooster</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> 
+                                <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">[</span><span class="n">left_idx</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">TreeBooster</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> 
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">[</span><span class="n">right_idx</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_leaf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span> <span class="o">==</span> <span class="mf">0.</span>
+
+    <span class="k">def</span> <span class="nf">_find_better_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_idx</span><span class="p">):</span>
+        <span class="k">pass</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Split-Finding">Split Finding<a class="anchor-link" href="#Split-Finding"> </a></h3><p>Split finding follows the exact same pattern that we used in the decision tree, except we keep track of gradient and hessian stats instead of target value stats, and of course we use the XGBoost gain criterion (equation 7 from the paper) for evaluating splits.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">_find_better_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_idx</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">,</span> <span class="n">feature_idx</span><span class="p">]</span>
+    <span class="n">g</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">]</span>
+    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">sort_g</span><span class="p">,</span> <span class="n">sort_h</span><span class="p">,</span> <span class="n">sort_x</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">],</span> <span class="n">h</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">]</span>
+    <span class="n">sum_g</span><span class="p">,</span> <span class="n">sum_h</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">h</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">sum_g_right</span><span class="p">,</span> <span class="n">sum_h_right</span> <span class="o">=</span> <span class="n">sum_g</span><span class="p">,</span> <span class="n">sum_h</span>
+    <span class="n">sum_g_left</span><span class="p">,</span> <span class="n">sum_h_left</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">g_i</span><span class="p">,</span> <span class="n">h_i</span><span class="p">,</span> <span class="n">x_i</span><span class="p">,</span> <span class="n">x_i_next</span> <span class="o">=</span> <span class="n">sort_g</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sort_h</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sort_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sort_x</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">sum_g_left</span> <span class="o">+=</span> <span class="n">g_i</span><span class="p">;</span> <span class="n">sum_g_right</span> <span class="o">-=</span> <span class="n">g_i</span>
+        <span class="n">sum_h_left</span> <span class="o">+=</span> <span class="n">h_i</span><span class="p">;</span> <span class="n">sum_h_right</span> <span class="o">-=</span> <span class="n">h_i</span>
+        <span class="k">if</span> <span class="n">sum_h_left</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_child_weight</span> <span class="ow">or</span> <span class="n">x_i</span> <span class="o">==</span> <span class="n">x_i_next</span><span class="p">:</span><span class="k">continue</span>
+        <span class="k">if</span> <span class="n">sum_h_right</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_child_weight</span><span class="p">:</span> <span class="k">break</span>
+
+        <span class="n">gain</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">sum_g_left</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sum_h_left</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">))</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="n">sum_g_right</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sum_h_right</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">))</span>
+                        <span class="o">-</span> <span class="p">(</span><span class="n">sum_g</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sum_h</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">))</span>
+                        <span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Eq(7) in the xgboost paper</span>
+        <span class="k">if</span> <span class="n">gain</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">split_feature_idx</span> <span class="o">=</span> <span class="n">feature_idx</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span> <span class="o">=</span> <span class="n">gain</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_i</span> <span class="o">+</span> <span class="n">x_i_next</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+            
+<span class="n">TreeBooster</span><span class="o">.</span><span class="n">_find_better_split</span> <span class="o">=</span> <span class="n">_find_better_split</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Prediction">Prediction<a class="anchor-link" href="#Prediction"> </a></h3><p>Prediction works exactly the same as in our decision tree, and the methods are nearly identical.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_predict_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()])</span>
+
+<span class="k">def</span> <span class="nf">_predict_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span> 
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_feature_idx</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> \
+        <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span>
+    <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">_predict_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+<span class="n">TreeBooster</span><span class="o">.</span><span class="n">predict</span> <span class="o">=</span> <span class="n">predict</span> 
+<span class="n">TreeBooster</span><span class="o">.</span><span class="n">_predict_row</span> <span class="o">=</span> <span class="n">_predict_row</span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="The-Complete-XGBoost-From-Scratch-Implementation">The Complete XGBoost From Scratch Implementation<a class="anchor-link" href="#The-Complete-XGBoost-From-Scratch-Implementation"> </a></h2><p>Here's the entire implementation which produces a usable <code>XGBoostModel</code> class with fit and predict methods.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">XGBoostModel</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;XGBoost from Scratch</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subsample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;subsample&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;subsample&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;learning_rate&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;base_score&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;base_score&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;max_depth&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;max_depth&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">random_seed</span><span class="p">)</span>
+                
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">num_boost_round</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">current_predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_prediction</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boosters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_boost_round</span><span class="p">):</span>
+            <span class="n">gradients</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">current_predictions</span><span class="p">)</span>
+            <span class="n">hessians</span> <span class="o">=</span> <span class="n">objective</span><span class="o">.</span><span class="n">hessian</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">current_predictions</span><span class="p">)</span>
+            <span class="n">sample_idxs</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subsample</span> <span class="o">==</span> <span class="mf">1.0</span> \
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> 
+                                     <span class="n">size</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subsample</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span> 
+                                     <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">booster</span> <span class="o">=</span> <span class="n">TreeBooster</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">gradients</span><span class="p">,</span> <span class="n">hessians</span><span class="p">,</span> 
+                                  <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span> <span class="n">sample_idxs</span><span class="p">)</span>
+            <span class="n">current_predictions</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">*</span> <span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boosters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">booster</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> 
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">] train loss = </span><span class="si">{</span><span class="n">objective</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">current_predictions</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_prediction</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> 
+                <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">([</span><span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="k">for</span> <span class="n">booster</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">boosters</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">TreeBooster</span><span class="p">():</span>
+ 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">,</span> <span class="n">idxs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">=</span> <span class="n">max_depth</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;max_depth must be nonnegative&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_child_weight</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;min_child_weight&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;min_child_weight&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;reg_lambda&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;reg_lambda&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;gamma&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">colsample_bynode</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;colsample_bynode&#39;</span><span class="p">]</span> \
+            <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;colsample_bynode&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="n">g</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span> <span class="n">h</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">if</span> <span class="n">idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">g</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idxs</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">idxs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">c</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">idxs</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="o">-</span><span class="n">g</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">)</span> <span class="c1"># Eq (5)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span> <span class="o">=</span> <span class="mf">0.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_insert_child_nodes</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_maybe_insert_child_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">c</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_better_split</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span> <span class="k">return</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">split_feature_idx</span><span class="p">]</span>
+        <span class="n">left_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">right_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">TreeBooster</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> 
+                                <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">[</span><span class="n">left_idx</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">TreeBooster</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> 
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">max_depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">[</span><span class="n">right_idx</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_leaf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span> <span class="o">==</span> <span class="mf">0.</span>
+    
+    <span class="k">def</span> <span class="nf">_find_better_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_idx</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">,</span> <span class="n">feature_idx</span><span class="p">]</span>
+        <span class="n">g</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">g</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">idxs</span><span class="p">]</span>
+        <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">sort_g</span><span class="p">,</span> <span class="n">sort_h</span><span class="p">,</span> <span class="n">sort_x</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">],</span> <span class="n">h</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">]</span>
+        <span class="n">sum_g</span><span class="p">,</span> <span class="n">sum_h</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="n">h</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">sum_g_right</span><span class="p">,</span> <span class="n">sum_h_right</span> <span class="o">=</span> <span class="n">sum_g</span><span class="p">,</span> <span class="n">sum_h</span>
+        <span class="n">sum_g_left</span><span class="p">,</span> <span class="n">sum_h_left</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">g_i</span><span class="p">,</span> <span class="n">h_i</span><span class="p">,</span> <span class="n">x_i</span><span class="p">,</span> <span class="n">x_i_next</span> <span class="o">=</span> <span class="n">sort_g</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sort_h</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sort_x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">sort_x</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">sum_g_left</span> <span class="o">+=</span> <span class="n">g_i</span><span class="p">;</span> <span class="n">sum_g_right</span> <span class="o">-=</span> <span class="n">g_i</span>
+            <span class="n">sum_h_left</span> <span class="o">+=</span> <span class="n">h_i</span><span class="p">;</span> <span class="n">sum_h_right</span> <span class="o">-=</span> <span class="n">h_i</span>
+            <span class="k">if</span> <span class="n">sum_h_left</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_child_weight</span> <span class="ow">or</span> <span class="n">x_i</span> <span class="o">==</span> <span class="n">x_i_next</span><span class="p">:</span><span class="k">continue</span>
+            <span class="k">if</span> <span class="n">sum_h_right</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_child_weight</span><span class="p">:</span> <span class="k">break</span>
+
+            <span class="n">gain</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">sum_g_left</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sum_h_left</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">))</span>
+                            <span class="o">+</span> <span class="p">(</span><span class="n">sum_g_right</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sum_h_right</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">))</span>
+                            <span class="o">-</span> <span class="p">(</span><span class="n">sum_g</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="p">(</span><span class="n">sum_h</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_lambda</span><span class="p">))</span>
+                            <span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="o">/</span><span class="mi">2</span> <span class="c1"># Eq(7) in the xgboost paper</span>
+            <span class="k">if</span> <span class="n">gain</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span><span class="p">:</span> 
+                <span class="bp">self</span><span class="o">.</span><span class="n">split_feature_idx</span> <span class="o">=</span> <span class="n">feature_idx</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">best_score_so_far</span> <span class="o">=</span> <span class="n">gain</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_i</span> <span class="o">+</span> <span class="n">x_i_next</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+                
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_predict_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()])</span>
+
+    <span class="k">def</span> <span class="nf">_predict_row</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_leaf</span><span class="p">:</span> 
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_feature_idx</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> \
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">right</span>
+        <span class="k">return</span> <span class="n">child</span><span class="o">.</span><span class="n">_predict_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Testing">Testing<a class="anchor-link" href="#Testing"> </a></h2><p>Let's take this baby for a spin and benchmark its performance against the actual XGBoost library. We use the scikit learn <a href="https://scikit-learn.org/stable/modules/generated/sklearn.datasets.fetch_california_housing.html">California housing dataset</a> for benchmarking.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">fetch_california_housing</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+    
+<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">fetch_california_housing</span><span class="p">(</span><span class="n">as_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> 
+                                                    <span class="n">random_state</span><span class="o">=</span><span class="mi">43</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's start with a nice friendly squared error objective function for training. We should probably have a future post all about how to define custom objective functions in XGBoost, but for now, here's how I define squared error.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">SquaredErrorObjective</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">pred</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">y</span> <span class="o">-</span> <span class="n">pred</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">pred</span><span class="p">):</span> <span class="k">return</span> <span class="n">pred</span> <span class="o">-</span> <span class="n">y</span>
+    <span class="k">def</span> <span class="nf">hessian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">pred</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here I use a more or less arbitrary set of hyperparameters for training.  Feel free to play around with tuning and trying other parameter combinations yourself.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">xgboost</span> <span class="k">as</span> <span class="nn">xgb</span>
+
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;learning_rate&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="s1">&#39;max_depth&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s1">&#39;subsample&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+    <span class="s1">&#39;reg_lambda&#39;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>
+    <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="s1">&#39;min_child_weight&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
+    <span class="s1">&#39;base_score&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="s1">&#39;tree_method&#39;</span><span class="p">:</span> <span class="s1">&#39;exact&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">num_boost_round</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="c1"># train the from-scratch XGBoost model</span>
+<span class="n">model_scratch</span> <span class="o">=</span> <span class="n">XGBoostModel</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">random_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<span class="n">model_scratch</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">SquaredErrorObjective</span><span class="p">(),</span> <span class="n">num_boost_round</span><span class="p">)</span>
+
+<span class="c1"># train the library XGBoost model</span>
+<span class="n">dtrain</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">DMatrix</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">y_train</span><span class="p">)</span>
+<span class="n">dtest</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">DMatrix</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">y_test</span><span class="p">)</span>
+<span class="n">model_xgb</span> <span class="o">=</span> <span class="n">xgb</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">dtrain</span><span class="p">,</span> <span class="n">num_boost_round</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's check the models' performance on the held out test data to benchmark our implementation.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pred_scratch</span> <span class="o">=</span> <span class="n">model_scratch</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+<span class="n">pred_xgb</span> <span class="o">=</span> <span class="n">model_xgb</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">dtest</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;scratch score: </span><span class="si">{</span><span class="n">SquaredErrorObjective</span><span class="p">()</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred_scratch</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;xgboost score: </span><span class="si">{</span><span class="n">SquaredErrorObjective</span><span class="p">()</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span> <span class="n">pred_xgb</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>scratch score: 0.2434125759558149
+xgboost score: 0.24123239765807963
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Well, look at that! Our scratch-built SGBoost is looking pretty consistent with the library. Go us!</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Wrapping-Up">Wrapping Up<a class="anchor-link" href="#Wrapping-Up"> </a></h2><p>I'd say this is a pretty good milestone for us here at Random Realizations. We've been hammering away at the various concepts around gradient boosting, leaving a trail of equations and scratch-built algos in our wake. Today we put all of that together to create a legit scratch build of XGBoost, something that would have been out of reach for me before we embarked on this journey together over a year ago. To anyone with the patience to read through this stuff, cheers to you! I hope you're learning and enjoying this as much as I am.</p>
+<h2 id="Reader-Exercises">Reader Exercises<a class="anchor-link" href="#Reader-Exercises"> </a></h2><p>If you want to take this a step further and deepen your understanding and coding abilities, let me recommend some exercises for you.</p>
+<ol>
+<li>Implement column subsampling. XGBoost itself provides column subsampling by tree, by level, and by node. Try implementing by tree first, then try adding by level or by node as well. These should be pretty straightforward to do.</li>
+<li>Implement sparsity aware split finding for missing feature values (Algorithm 2 in the <a href="https://arxiv.org/abs/1603.02754">XGBoost paper</a>). This will be a little more involved, since you'll need to refactor and modify several parts of the tree booster class.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="mcb00/blog"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/xgboost-from-scratch" hidden></a>
+</article>
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>RSS</span>
+          </a>
+        </p>
+        <ul class="contact-list">
+          
+        </ul>
+      </div>
+      <div class="footer-col">
+        <p>A blog about data science, statistics, machine learning, and the scientific method.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/mcb00" target="_blank" title="mcb00"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li><li><a rel="me" href="https://www.linkedin.com/in/matt-bowers" target="_blank" title="matt-bowers"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#linkedin"></use></svg></a></li><li><a rel="me" href="https://twitter.com/mcbwrs" target="_blank" title="mcbwrs"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
