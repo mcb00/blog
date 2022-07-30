@@ -311,7 +311,7 @@ $$L_{\text{after split}} = L_L + L_R = -\frac{1}{2}  \frac{ (\sum_{i \in I_L} g_
 $$ \Delta L = L_{\text{before split}} -  L_{\text{after split}} = L - (L_L + L_R)$$
 
 
-$$\Delta L = \frac{1}{2} \left [ \frac{ (\sum_{i \in I_L} g_i )^2 } {\sum_{i \in I_L} h_i + \lambda} + \frac{ (\sum_{i \in I_R} g_i )^2 } {\sum_{i \in I_R} h_i + \lambda} - \frac{ (\sum_{i \in I_L} g_i )^2 } {\sum_{i \in I_L} h_i + \lambda} \right ] - \gamma $$
+$$\Delta L = \frac{1}{2} \left [ \frac{ (\sum_{i \in I_L} g_i )^2 } {\sum_{i \in I_L} h_i + \lambda} + \frac{ (\sum_{i \in I_R} g_i )^2 } {\sum_{i \in I_R} h_i + \lambda} - \frac{ (\sum_{i \in I} g_i )^2 } {\sum_{i \in I} h_i + \lambda} \right ] - \gamma $$
 </p>
 <p>which is Equation (7) from the paper. In practice it makes sense to accept a split only if the gain is positive, thus the $\gamma$ parameter sets the minimum gain required to make a further split. This is why $\gamma$ can be set with the parameter <code>gamma</code> or the more descriptive<code>min_loss_split</code>.</p>
 
