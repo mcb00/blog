@@ -7,7 +7,9 @@
 https://mcb00.github.io/blog/
 
 # My Blog
-
+This repo is currently being deprecated. 
+The blog will move to a new repo using Quarto to generate the website.
+Stay tuned for updates.
 
 _powered by [fastpages](https://github.com/fastai/fastpages)_
 
