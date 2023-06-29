@@ -10,7 +10,7 @@ https://mcb00.github.io/blog/
 
 The source for my blog has moved to a new repo.
 
-[](https://github.com/mcb00/rr-blog)
+[https://github.com/mcb00/rr-blog](https://github.com/mcb00/rr-blog)
 
 The new project uses [Quarto](https://quarto.org) as the content management system, rather than [fastpages](https://github.com/fastai/fastpages) which was deprecated by its maintainers. 
 
